@@ -1,6 +1,11 @@
 // src/App.tsx
 import React from "react";
-import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useLocation,
+} from "react-router-dom";
 import { AppLayout } from "./layout/AppLayout";
 import { ProtectedRoute } from "./auth/ProtectedRoute";
 
@@ -21,8 +26,7 @@ import UserInfoPage from "./modules/iam/UserInfoPage";
 
 // Warehouse Module
 import InstrumentsPage from "./modules/warehouse/InstrumentsPage";
-import { ReagentsPage } from "./modules/warehouse/ReagentsPage";
-import { WarehousePage } from "./modules/warehouse/WarehousePage";
+import  WarehousePage from "./modules/warehouse/WarehousePage";
 import { FlaggingRulesPage } from "./modules/warehouse/FlaggingRulesPage";
 import InstrumentDetailsPage from "./modules/warehouse/InstrumentDetailsPage";
 import EditInstrumentPage from "./modules/warehouse/EditInstrumentPage";
@@ -30,12 +34,12 @@ import AddInstrumentPage from "./modules/warehouse/AddInstrumentPage";
 
 // Test Order Module
 import { TestOrdersPage } from "./modules/testorder/TestOrdersPage";
-import TestResultDetailPage from "./modules/testorder/TestResultDetailPage";
-import MyTestResultsPage from "./modules/testorder/MyTestResultsPage";
+import TestResultDetailPage from "./modules/testresult/TestResultDetailPage";
+import MyTestResultsPage from "./modules/testresult/MyTestResultsPage";
 import TestOrderDetailsPage from "./modules/testorder/TestOrderDetailsPage";
 import UpdateTestOrderPage from "./modules/testorder/UpdateTestOrderPage";
 import NewTestOrderPage from "./modules/testorder/NewTestOrderPage";
-import CommentsPage from "./modules/testorder/CommentsPage";
+import CommentsPage from "./modules/testresult/CommentsPage";
 
 // Monitoring Module
 import { MonitoringPage } from "./modules/monitoring/MonitoringPage";
@@ -111,18 +115,26 @@ function AppRoutesInner() {
             element={<InstrumentDetailsPage />}
           />
           <Route path="warehouse" element={<WarehousePage />} />
-          <Route path="reagents" element={<ReagentsPage />} />
           <Route path="flagging-rules" element={<FlaggingRulesPage />} />
 
           {/* Test Orders */}
           <Route path="test-orders" element={<TestOrdersPage />} />
           <Route path="test-orders/new" element={<NewTestOrderPage />} />
-          <Route path="test-orders/:orderId/edit" element={<UpdateTestOrderPage />} />
-          <Route path="test-orders/:orderId" element={<TestOrderDetailsPage />} />
+          <Route
+            path="test-orders/:orderId/edit"
+            element={<UpdateTestOrderPage />}
+          />
+          <Route
+            path="test-orders/:orderId"
+            element={<TestOrderDetailsPage />}
+          />
 
           {/* Test Results routes (detail route under /admin) */}
           <Route path="test-results" element={<MyTestResultsPage />} />
-          <Route path="test-results/:orderNumber" element={<TestResultDetailPage />} />
+          <Route
+            path="test-results/:orderNumber"
+            element={<TestResultDetailPage />}
+          />
 
           <Route path="my-test-results" element={<MyTestResultsPage />} />
           {/* Comments */}
@@ -143,8 +155,22 @@ function AppRoutesInner() {
           <Route path="reports" element={<ReportsPage />} />
 
           {/* misc */}
-          <Route path="settings" element={<div className="p-6"><h1 className="text-2xl font-bold">Settings</h1></div>} />
-          <Route path="profile" element={<div className="p-6"><h1 className="text-2xl font-bold">My Profile</h1></div>} />
+          <Route
+            path="settings"
+            element={
+              <div className="p-6">
+                <h1 className="text-2xl font-bold">Settings</h1>
+              </div>
+            }
+          />
+          <Route
+            path="profile"
+            element={
+              <div className="p-6">
+                <h1 className="text-2xl font-bold">My Profile</h1>
+              </div>
+            }
+          />
         </Route>
       </Routes>
 
@@ -152,7 +178,10 @@ function AppRoutesInner() {
       {background && (
         <Routes>
           {/* Note: this path must match the nested admin modal path exactly */}
-          <Route path="/admin/test-results/:orderNumber" element={<TestResultDetailPage />} />
+          <Route
+            path="/admin/test-results/:orderNumber"
+            element={<TestResultDetailPage />}
+          />
         </Routes>
       )}
     </>
