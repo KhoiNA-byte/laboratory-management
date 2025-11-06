@@ -1,399 +1,528 @@
 // src/pages/MyTestResultsPage.tsx
-import {
-  CheckCircleIcon,
-  DocumentTextIcon,
-  ExclamationTriangleIcon,
-} from "@heroicons/react/24/outline";
-import React, { useMemo, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import React, { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { XMarkIcon } from "@heroicons/react/24/outline";
+import Comments, { CommentItem } from "./CommentsPage";
 
-type Row = {
-  id: string;
+/* ------------- Types ------------- */
+type ParamRow = {
+  parameter: string;
+  result: string;
+  unit: string;
+  referenceRange: string;
+  deviation?: string;
+  flag?: "High" | "Low" | "Normal" | "Critical";
+  appliedEvaluate?: string;
+};
+
+type OrderData = {
   patientName: string;
-  date: string;
-  tester: string;
-  status: "Completed" | "In Progress";
+  sex: string;
+  collected: string;
+  instrument: string;
+  criticalCount: number;
+  rows: ParamRow[];
+  reviewedBy?: string;
+  reviewedAt?: string;
+  comments?: CommentItem[];
+};
+
+/* ------------- Mock DB ------------- */
+const MOCK_DATA: Record<string, OrderData> = {
+  "TO-2025-005": {
+    patientName: "Tran Gia Huy",
+    sex: "Female",
+    collected: "2025-01-13 08:35",
+    instrument: "Cobas 311",
+    criticalCount: 2,
+    rows: [
+      {
+        parameter: "WBC",
+        result: "12,000",
+        unit: "cells/µL",
+        referenceRange: "4,000–10,000",
+        deviation: "+20%",
+        flag: "High",
+        appliedEvaluate: "High-v2",
+      },
+      {
+        parameter: "HGB",
+        result: "14.1",
+        unit: "g/dL",
+        referenceRange: "14–18",
+        deviation: "-1%",
+        flag: "Normal",
+        appliedEvaluate: "-",
+      },
+      {
+        parameter: "HCT",
+        result: "45",
+        unit: "%",
+        referenceRange: "42–52",
+        flag: "High",
+        appliedEvaluate: "High-v1",
+      },
+      {
+        parameter: "PLT",
+        result: "100,000",
+        unit: "cells/µL",
+        referenceRange: "150,000–350,000",
+        flag: "Low",
+        appliedEvaluate: "Low-v1",
+      },
+      {
+        parameter: "MCV",
+        result: "92",
+        unit: "fL",
+        referenceRange: "80–100",
+        flag: "Normal",
+      },
+      {
+        parameter: "RBC",
+        result: "4.85",
+        unit: "million/µL",
+        referenceRange: "4.2–5.4",
+        deviation: "-1%",
+        flag: "Normal",
+      },
+      {
+        parameter: "MCH",
+        result: "30",
+        unit: "pg",
+        referenceRange: "27–33",
+        deviation: "-1%",
+        flag: "Normal",
+      },
+      {
+        parameter: "MCHC",
+        result: "33",
+        unit: "g/dL",
+        referenceRange: "32–36",
+        deviation: "+4%",
+        flag: "Normal",
+      },
+    ],
+    comments: [
+      {
+        id: "c1",
+        author: "Dr. Sarah Johnson",
+        authorInitials: "SJ",
+        role: "Clinician",
+        text: "Retest MCHC",
+        createdAt: "2025-01-13T15:30:00.000Z",
+      },
+    ],
+  },
+};
+
+const structuredCloneSafe = <T,>(v: T): T => JSON.parse(JSON.stringify(v));
+
+const FlagDot: React.FC<{ flag?: ParamRow["flag"] }> = ({ flag }) => {
+  if (flag === "High")
+    return <span className="h-3 w-3 rounded-full bg-red-500 inline-block" />;
+  if (flag === "Low")
+    return <span className="h-3 w-3 rounded-full bg-amber-500 inline-block" />;
+  if (flag === "Critical")
+    return <span className="h-3 w-3 rounded-full bg-red-700 inline-block" />;
+  return <span className="h-3 w-3 rounded-full bg-green-500 inline-block" />;
 };
 
 export const MyTestResultsPage: React.FC = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState("All Results");
-  const [showActionsDropdown, setShowActionsDropdown] = useState<string | null>(
-    null
+  const orderNumber = "TO-2025-005"; // Default order number
+
+  const [orderData, setOrderData] = useState<OrderData | undefined>(() =>
+    orderNumber ? structuredCloneSafe(MOCK_DATA[orderNumber]) : undefined
+  );
+  const [rowsState, setRowsState] = useState<ParamRow[]>(orderData?.rows ?? []);
+  const [isReviewing, setIsReviewing] = useState(false);
+  const originalRowsRef = useRef<ParamRow[] | null>(null);
+
+  const [reviewedBy, setReviewedBy] = useState<string>(
+    orderData?.reviewedBy ?? "AI Auto Review"
+  );
+  const [reviewedAt, setReviewedAt] = useState<string | undefined>(
+    orderData?.reviewedAt
   );
 
-  // mock data
-  const mockRows: Row[] = [
-    {
-      id: "TO-2025-005",
-      patientName: "Tran Gia Huy",
-      date: "10/16/2025, 8:35:00 AM",
-      tester: "Dr. Sarah Johnson",
-      status: "Completed",
-    },
-    {
-      id: "TO-2025-006",
-      patientName: "Nguyen Van A",
-      date: "10/15/2025, 10:10:00 AM",
-      tester: "Lab Tech - Ronaldo",
-      status: "In Progress",
-    },
-    {
-      id: "TO-2025-007",
-      patientName: "Pham Minh Tuan",
-      date: "10/14/2025, 9:50:00 AM",
-      tester: "Dr. Emily Carter",
-      status: "Completed",
-    },
-    {
-      id: "TO-2025-008",
-      patientName: "Le Thi Thanh",
-      date: "10/13/2025, 11:20:00 AM",
-      tester: "Lab Tech - Ronaldo",
-      status: "In Progress",
-    },
-    {
-      id: "TO-2025-009",
-      patientName: "Hoang Duc Hieu",
-      date: "10/12/2025, 2:45:00 PM",
-      tester: "Dr. Michael Smith",
-      status: "Completed",
-    },
-    {
-      id: "TO-2025-010",
-      patientName: "Truong Quang",
-      date: "10/11/2025, 1:15:00 PM",
-      tester: "Lab Tech - Maria Lopez",
-      status: "In Progress",
-    },
-    {
-      id: "TO-2025-011",
-      patientName: "Tran Thi Kieu",
-      date: "10/10/2025, 4:05:00 PM",
-      tester: "Dr. Sarah Johnson",
-      status: "Completed",
-    },
-    {
-      id: "TO-2025-012",
-      patientName: "Nguyen Thi Hoa",
-      date: "10/09/2025, 9:00:00 AM",
-      tester: "Dr. Emily Carter",
-      status: "Completed",
-    },
-    {
-      id: "TO-2025-013",
-      patientName: "Pham Van Binh",
-      date: "10/08/2025, 10:30:00 AM",
-      tester: "Lab Tech - Ronaldo",
-      status: "In Progress",
-    },
-    {
-      id: "TO-2025-014",
-      patientName: "Le Van Duc",
-      date: "10/07/2025, 3:15:00 PM",
-      tester: "Dr. Michael Smith",
-      status: "Completed",
-    },
-    {
-      id: "TO-2025-015",
-      patientName: "Hoang Thi Lan",
-      date: "10/06/2025, 11:50:00 AM",
-      tester: "Lab Tech - Maria Lopez",
-      status: "In Progress",
-    },
-    {
-      id: "TO-2025-016",
-      patientName: "Tran Van Toan",
-      date: "10/05/2025, 8:20:00 AM",
-      tester: "Dr. Sarah Johnson",
-      status: "Completed",
-    },
-    {
-      id: "TO-2025-017",
-      patientName: "Vu Thi My",
-      date: "10/04/2025, 2:40:00 PM",
-      tester: "Dr. Emily Carter",
-      status: "Completed",
-    },
-    {
-      id: "TO-2025-018",
-      patientName: "Nguyen Van Long",
-      date: "10/03/2025, 1:05:00 PM",
-      tester: "Lab Tech - Ronaldo",
-      status: "In Progress",
-    },
-    {
-      id: "TO-2025-019",
-      patientName: "Le Thi Mai",
-      date: "10/02/2025, 9:30:00 AM",
-      tester: "Dr. Michael Smith",
-      status: "Completed",
-    },
-    {
-      id: "TO-2025-020",
-      patientName: "Pham Van Quang",
-      date: "10/01/2025, 4:10:00 PM",
-      tester: "Lab Tech - Maria Lopez",
-      status: "In Progress",
-    },
-  ];
+  const [comments, setComments] = useState<CommentItem[]>(
+    orderData?.comments ? structuredCloneSafe(orderData.comments) : []
+  );
+  const [isCommentsOpen, setIsCommentsOpen] = useState(false);
 
-  const filteredRows = useMemo(() => {
-    const q = searchTerm.trim().toLowerCase();
-    return mockRows.filter((r) => {
-      if (activeTab === "Completed" && r.status !== "Completed") return false;
-      if (activeTab === "In Progress" && r.status !== "In Progress")
-        return false;
-      if (!q) return true;
-      return (
-        r.id.toLowerCase().includes(q) ||
-        r.patientName.toLowerCase().includes(q) ||
-        r.tester.toLowerCase().includes(q)
-      );
-    });
-  }, [mockRows, activeTab, searchTerm]);
+  useEffect(() => {
+    if (orderNumber) {
+      const data = MOCK_DATA[orderNumber];
+      setOrderData(data ? structuredCloneSafe(data) : undefined);
+      setRowsState(data ? structuredCloneSafe(data.rows) : []);
+      setComments(data?.comments ? structuredCloneSafe(data.comments) : []);
+      setReviewedBy(data?.reviewedBy ?? "AI Auto Review");
+      setReviewedAt(data?.reviewedAt);
+    }
+  }, [orderNumber]);
 
-  const total = mockRows.length;
-  const pending = mockRows.filter((r) => r.status === "In Progress").length;
-  const completed = mockRows.filter((r) => r.status === "Completed").length;
+  if (!orderData) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-gray-500">Loading...</p>
+      </div>
+    );
+  }
 
-  const handleNew = () => {
-    navigate("/admin/test-results/new");
+  /* ---------- Review logic ---------- */
+  const handleStartReview = () => {
+    originalRowsRef.current = structuredCloneSafe(rowsState);
+    setIsReviewing(true);
+  };
+  const handleCancelReview = () => {
+    if (originalRowsRef.current)
+      setRowsState(structuredCloneSafe(originalRowsRef.current));
+    originalRowsRef.current = null;
+    setIsReviewing(false);
+  };
+  const handleSaveReview = () => {
+    const currentUser = "Admin User";
+    const now = new Date().toISOString();
+    setOrderData((d) =>
+      d
+        ? {
+            ...d,
+            rows: structuredCloneSafe(rowsState),
+            reviewedBy: currentUser,
+            reviewedAt: now,
+          }
+        : d
+    );
+    setReviewedBy(currentUser);
+    setReviewedAt(now);
+    originalRowsRef.current = null;
+    setIsReviewing(false);
+    alert("Saved review changes (mock).");
   };
 
-  const handleView = (orderNumber: string) => {
-    navigate(`/admin/test-results/${orderNumber}`, {
-      state: { background: location },
+  const handleFieldChange = (
+    index: number,
+    field: keyof ParamRow,
+    value: string
+  ) => {
+    setRowsState((prev) => {
+      const copy = prev.map((r) => ({ ...r }));
+      copy[index] = { ...copy[index], [field]: value };
+      return copy;
     });
   };
 
-  const handleExport = (id: string) => {
-    alert(`Exporting ${id} (mock)`);
+  const handleReview = () => {
+    if (isReviewing) handleSaveReview();
+    else handleStartReview();
+  };
+  const handleDownloadPdf = () => alert("Downloading PDF (placeholder)");
+  const handleViewHL7 = () => alert("View Raw HL7 (placeholder)");
+
+  /* ---------- Comments popup controls ---------- */
+  const openComments = () => setIsCommentsOpen(true);
+  const closeComments = () => setIsCommentsOpen(false);
+  const onChangeComments = (newComments: CommentItem[]) => {
+    setComments(newComments);
   };
 
-  const getStatusBadgeColor = (status: Row["status"]) =>
-    status === "Completed"
-      ? "bg-blue-100 text-blue-800"
-      : "bg-orange-100 text-orange-800";
+  const latestComment =
+    comments.length === 0
+      ? null
+      : comments
+          .slice()
+          .sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt))[0];
+
+  const total = rowsState.length;
+  const normal = rowsState.filter((r) => !r.flag || r.flag === "Normal").length;
+  const high = rowsState.filter((r) => r.flag === "High").length;
+  const low = rowsState.filter((r) => r.flag === "Low").length;
 
   return (
-    <div className="space-y-6">
-      {/* Summary Cards */}
-      {/* Summary cards (top) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Tests</p>
-              <p className="text-3xl font-bold text-gray-900">{total}</p>
-              <p className="text-sm text-gray-500 mt-1">All time</p>
-            </div>
-            <div className="w-12 h-12 flex items-center justify-center rounded-lg border border-gray-100">
-              <DocumentTextIcon className="h-6 w-6 text-gray-600" />
-            </div>
-          </div>
-        </div>
+    <div>
+      {/* Nếu comments mở -> ẩn modal chính (render only comments) */}
+      {!isCommentsOpen && (
+        <>
+          {/* Main content */}
+          <div className="min-h-screen bg-gray-50 py-8">
+            <div className="max-w-7xl mx-auto px-4">
+              <div className="bg-white rounded-xl shadow-lg">
+                {/* Header area */}
+                <div className="px-6 py-4 border-b border-gray-200">
+                  <div className="flex items-start justify-between">
+                    {/* Left: Title and Patient Info */}
+                    <div className="flex-1">
+                      <h2 className="text-xl font-bold text-gray-900 mb-2">
+                        Complete Blood Count (CBC)
+                      </h2>
+                      <div className="text-sm text-gray-600 space-y-1">
+                        <div>{orderData.patientName}</div>
+                        <div>{orderNumber}</div>
+                        <div>Sex: {orderData.sex}</div>
+                      </div>
+                    </div>
+                    {/* Right: Collected and Instrument */}
+                    <div className="text-right text-sm text-gray-600 space-y-1">
+                      <div>Collected: {orderData.collected}</div>
+                      <div>Instrument: {orderData.instrument}</div>
+                    </div>
+                  </div>
+                </div>
 
-        <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">
-                Pending Results
-              </p>
-              <p className="text-3xl font-bold text-gray-900">{pending}</p>
-              <p className="text-sm text-gray-500 mt-1">In progress</p>
-            </div>
-            <div className="w-12 h-12 flex items-center justify-center rounded-lg border border-gray-100">
-              <ExclamationTriangleIcon className="h-6 w-6 text-gray-600" />
-            </div>
-          </div>
-        </div>
+                {/* Main content */}
+                <div className="p-6">
+                  <div className="flex flex-col md:flex-row gap-6">
+                    {/* Left: table */}
+                    <div className="flex-1 min-w-0">
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                          <thead>
+                            <tr className="text-sm text-gray-500 border-b border-gray-200">
+                              <th className="py-3 pr-6 font-medium">Parameter</th>
+                              <th className="py-3 pr-6 font-medium">Result</th>
+                              <th className="py-3 pr-6 font-medium">Unit</th>
+                              <th className="py-3 pr-6 font-medium">Reference range</th>
+                              <th className="py-3 pr-6 font-medium">Deviation</th>
+                              <th className="py-3 pr-6 font-medium">Flag</th>
+                              <th className="py-3 pr-6 font-medium">Applied Rule</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {rowsState.map((r, idx) => {
+                              const isHigh = r.flag === "High" || r.flag === "Critical";
+                              const isLow = r.flag === "Low";
+                              return (
+                                <tr
+                                  key={r.parameter}
+                                  className="align-top border-b border-gray-100"
+                                >
+                                  <td className="py-4 pr-6 font-semibold text-gray-700">
+                                    {r.parameter}
+                                  </td>
 
-        <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Completed</p>
-              <p className="text-3xl font-bold text-gray-900">{completed}</p>
-              <p className="text-sm text-gray-500 mt-1">Available to view</p>
-            </div>
-            <div className="w-12 h-12 flex items-center justify-center rounded-lg border border-gray-100">
-              <CheckCircleIcon className="h-6 w-6 text-gray-600" />
-            </div>
-          </div>
-        </div>
-      </div>
+                                  <td className="py-4 pr-6">
+                                    {isReviewing ? (
+                                      <input
+                                        type="text"
+                                        value={r.result}
+                                        onChange={(e) =>
+                                          handleFieldChange(
+                                            idx,
+                                            "result",
+                                            e.target.value
+                                          )
+                                        }
+                                        className="w-36 px-2 py-1 border rounded text-sm"
+                                      />
+                                    ) : (
+                                      <span
+                                        className={`font-semibold ${
+                                          isHigh
+                                            ? "text-red-600"
+                                            : isLow
+                                            ? "text-orange-600"
+                                            : "text-gray-900"
+                                        }`}
+                                      >
+                                        {r.result}
+                                      </span>
+                                    )}
+                                  </td>
 
-      {/* Panel */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">
-                Test Results
-              </h3>
-              <p className="text-sm text-gray-600">
-                Your laboratory test results and history
-              </p>
-            </div>
+                                  <td className="py-4 pr-6 text-sm text-gray-600">
+                                    {r.unit}
+                                  </td>
+                                  <td className="py-4 pr-6 text-sm text-gray-600">
+                                    {r.referenceRange}
+                                  </td>
 
-            <button
-              onClick={handleNew}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center gap-2"
-            >
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v16m8-8H4"
-                />
-              </svg>
-              New Test
-            </button>
-          </div>
+                                  <td className="py-4 pr-6 text-sm text-gray-600">
+                                    {isReviewing ? (
+                                      <input
+                                        type="text"
+                                        value={r.deviation ?? ""}
+                                        onChange={(e) =>
+                                          handleFieldChange(
+                                            idx,
+                                            "deviation",
+                                            e.target.value
+                                          )
+                                        }
+                                        className="w-28 px-2 py-1 border rounded text-sm"
+                                        placeholder="-"
+                                      />
+                                    ) : (
+                                      r.deviation ?? "-"
+                                    )}
+                                  </td>
 
-          {/* Tabs */}
-          <div className="flex space-x-8 mb-4">
-            {["All Results", "In Progress", "Completed"].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`pb-2 text-sm font-medium border-b-2 transition-colors ${
-                  activeTab === tab
-                    ? "border-blue-500 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
+                                  <td className="py-4 pr-6">
+                                    <div className="flex items-center gap-2">
+                                      <FlagDot flag={r.flag} />
+                                      <span className="text-sm text-gray-600">
+                                        {r.flag ?? "Normal"}
+                                      </span>
+                                    </div>
+                                  </td>
 
-          {/* Search */}
-          <div className="flex justify-end">
-            <div className="relative w-64">
-              <input
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search results..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg
-                  className="h-4 w-4 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
+                                  <td className="py-4 pr-6 text-sm text-gray-600">
+                                    {isReviewing ? (
+                                      <input
+                                        type="text"
+                                        value={r.appliedEvaluate ?? ""}
+                                        onChange={(e) =>
+                                          handleFieldChange(
+                                            idx,
+                                            "appliedEvaluate",
+                                            e.target.value
+                                          )
+                                        }
+                                        className="w-40 px-2 py-1 border rounded text-sm"
+                                        placeholder="-"
+                                      />
+                                    ) : (
+                                      r.appliedEvaluate ?? "-"
+                                    )}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Comment section below table */}
+                      <div className="mt-6 text-sm text-gray-700">
+                        <div className="mb-2">
+                          <strong>Comment:</strong> {latestComment ? latestComment.text : "Retest MCHC"}
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            openComments();
+                          }}
+                          className="text-blue-600 hover:underline"
+                        >
+                          More comment
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Right: summary & actions */}
+                    <div className="w-full md:w-[320px] flex-shrink-0 relative">
+                      {/* Badge Critical Values at top right */}
+                      <div className="absolute -top-2 -right-2 z-10">
+                        <span className="inline-block bg-red-600 text-white text-xs font-medium px-3 py-1 rounded">
+                          {orderData.criticalCount} Critical Values
+                        </span>
+                      </div>
+
+                      <div className="space-y-4 bg-white rounded-lg shadow-md p-4 border">
+                        <div>
+                          <h4 className="text-sm font-semibold text-gray-700 mb-3">
+                            Summary
+                          </h4>
+                          <ul className="text-sm text-gray-600 space-y-2">
+                            <li className="flex justify-between">
+                              <span>Total tests</span>
+                              <strong className="text-gray-900">{total}</strong>
+                            </li>
+                            <li className="flex justify-between">
+                              <span>Normal</span>
+                              <strong className="text-gray-900">{normal}</strong>
+                            </li>
+                            <li className="flex justify-between">
+                              <span>High</span>
+                              <strong className="text-gray-900">{high}</strong>
+                            </li>
+                            <li className="flex justify-between">
+                              <span>Low</span>
+                              <strong className="text-gray-900">{low}</strong>
+                            </li>
+                          </ul>
+                        </div>
+
+                        <div className="pt-4 border-t border-gray-200">
+                          <h4 className="text-sm font-semibold text-gray-700 mb-3">
+                            Reviewed
+                          </h4>
+                          <div className="text-sm text-gray-600 mb-1">By</div>
+                          <div className="text-sm font-medium text-blue-600">
+                            {reviewedBy}
+                          </div>
+                        </div>
+
+                        <div className="pt-4 border-t border-gray-200">
+                          <h4 className="text-sm font-semibold text-gray-700 mb-3">
+                            Actions
+                          </h4>
+                          <div className="space-y-2">
+                            <button
+                              type="button"
+                              onClick={handleDownloadPdf}
+                              className="w-full text-left px-0 py-1 text-sm text-gray-600 hover:text-gray-900"
+                            >
+                              Download PDF
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => alert("Request Reprocess (placeholder)")}
+                              className="w-full text-left px-0 py-1 text-sm text-gray-600 hover:text-gray-900"
+                            >
+                              Request Reprocess
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleViewHL7}
+                              className="w-full text-left px-0 py-1 text-sm text-gray-600 hover:text-gray-900"
+                            >
+                              View Raw HL7
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer */}
+                <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-end gap-3">
+                  <button
+                    onClick={() => {
+                      if (isReviewing) handleCancelReview();
+                      else navigate(-1);
+                    }}
+                    className="px-4 py-2 rounded-lg text-sm text-gray-600 hover:text-gray-900"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    onClick={handleReview}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                      isReviewing
+                        ? "bg-green-600 text-white hover:bg-green-700"
+                        : "bg-blue-600 text-white hover:bg-blue-700"
+                    }`}
+                  >
+                    {isReviewing ? "Save" : "Review"}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </>
+      )}
 
-        {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  TestOrder ID
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Patient
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Tester
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredRows.map((r) => (
-                <tr key={r.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-blue-600">
-                      {r.id}
-                    </div>
-                  </td>
-
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
-                      {r.patientName}
-                    </div>
-                  </td>
-
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {r.date}
-                  </td>
-
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {r.tester}
-                  </td>
-
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeColor(
-                        r.status
-                      )}`}
-                    >
-                      {r.status}
-                    </span>
-                  </td>
-
-                  <td className="px-6 py-5">
-                    <button
-                      onClick={() => handleView(r.id)}
-                      className="px-3 py-1 border border-gray-200 rounded-md text-sm hover:shadow"
-                    >
-                      View
-                    </button>
-                    <button
-                      onClick={() => handleExport(r.id)}
-                      className="px-3 py-1 border border-gray-200 rounded-md text-sm hover:shadow"
-                    >
-                      Export
-                    </button>
-                  </td>
-                </tr>
-              ))}
-
-              {filteredRows.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={6}
-                    className="px-6 py-12 text-center text-sm text-gray-500"
-                  >
-                    No results found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {/* Comments modal */}
+      {isCommentsOpen && orderNumber && (
+        <Comments
+          orderNumber={orderNumber}
+          initialComments={comments}
+          onClose={() => setIsCommentsOpen(false)}
+          onChangeComments={(c) => onChangeComments(c)}
+        />
+      )}
     </div>
   );
 };

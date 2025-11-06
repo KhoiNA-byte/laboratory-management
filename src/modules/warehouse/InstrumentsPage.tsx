@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import EditInstrumentModal from '../../components/Instruments/EditInstrumentModal';
 
 interface Instrument {
   id: string;
@@ -17,6 +18,8 @@ const InstrumentsPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [showActionsDropdown, setShowActionsDropdown] = useState<string | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedInstrument, setSelectedInstrument] = useState<Instrument | null>(null);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -137,6 +140,20 @@ const InstrumentsPage: React.FC = () => {
       // Here you would make an API call to delete the instrument
       console.log('Deleting instrument:', instrumentId);
     }
+  };
+
+  const handleEditInstrument = (instrument: Instrument) => {
+    setSelectedInstrument(instrument);
+    setShowEditModal(true);
+    setShowActionsDropdown(null);
+  };
+
+  const handleSaveInstrument = (updatedInstrument: Instrument) => {
+    console.log('Saving instrument:', updatedInstrument);
+    // Here you would make an API call to update the instrument
+    // For now, we'll just update the local state if needed
+    setShowEditModal(false);
+    setSelectedInstrument(null);
   };
 
   const handleAddInstrument = () => {
@@ -332,6 +349,15 @@ const InstrumentsPage: React.FC = () => {
                               View Details
                             </button>
                             <button
+                              onClick={() => handleEditInstrument(instrument)}
+                              className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                            >
+                              <svg className="h-4 w-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                              Edit
+                            </button>
+                            <button
                               onClick={() => handleUpdateQuantity(instrument.id)}
                               className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
                             >
@@ -395,6 +421,17 @@ const InstrumentsPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Edit Instrument Modal */}
+      <EditInstrumentModal
+        show={showEditModal}
+        onClose={() => {
+          setShowEditModal(false);
+          setSelectedInstrument(null);
+        }}
+        onSave={handleSaveInstrument}
+        instrument={selectedInstrument}
+      />
     </div>
   );
 };

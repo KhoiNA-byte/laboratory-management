@@ -4,6 +4,7 @@ import {
   getUsersAPI,
   createUserAPI,
   updateUserAPI,
+  deleteUserAPI,
   User,
 } from "../../services/userApi";
 
@@ -67,8 +68,25 @@ function* updateUserSaga(action: PayloadAction<any>): Generator {
   }
 }
 
+// Delete User Saga
+function* deleteUserSaga(action: PayloadAction<{ id: string; userId?: string }>): Generator {
+  try {
+    yield call(deleteUserAPI, action.payload);
+    yield put({
+      type: "users/deleteUserSuccess",
+      payload: { id: action.payload.id },
+    });
+  } catch (error: any) {
+    yield put({
+      type: "users/deleteUserFailure",
+      payload: error.message || "Failed to delete user",
+    });
+  }
+}
+
 export function* userSaga() {
   yield takeEvery("users/getUsersRequest", getUsersSaga);
   yield takeLatest("users/createUserRequest", createUserSaga);
   yield takeLatest("users/updateUserRequest", updateUserSaga);
+  yield takeLatest("users/deleteUserRequest", deleteUserSaga);
 }

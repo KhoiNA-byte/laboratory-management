@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
+import UpdateTestOrderModal from "../../components/TestOrders/UpdateTestOrderModal";
 
 // Styled Components
 const Container = styled.div`
@@ -374,9 +375,11 @@ export const TestOrdersPage = () => {
   const [showActionsDropdown, setShowActionsDropdown] = useState<string | null>(
     null
   );
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
 
   // Mock data exactly as shown in the figma
-  const mockTestOrders = [
+  const initialTestOrders = [
     {
       orderNumber: "TO-2025-001",
       patient: "John Doe",
@@ -433,15 +436,20 @@ export const TestOrdersPage = () => {
     },
   ];
 
+  const [testOrders, setTestOrders] = useState(initialTestOrders);
+
   const handleViewDetails = (orderNumber: string) => {
     console.log("View Details clicked for:", orderNumber);
     navigate(`/admin/test-orders/${orderNumber}`);
   };
 
   const handleUpdateOrder = (orderNumber: string) => {
-    console.log("Update order:", orderNumber);
+    const order = testOrders.find((o) => o.orderNumber === orderNumber);
+    if (order) {
+      setSelectedOrder(order);
+      setShowUpdateModal(true);
+    }
     setShowActionsDropdown(null);
-    navigate(`/admin/test-orders/${orderNumber}/edit`);
   };
 
   const handleDeleteOrder = (orderNumber: string) => {
@@ -453,7 +461,7 @@ export const TestOrdersPage = () => {
     navigate("/admin/test-orders/new");
   };
 
-  const filteredOrders = mockTestOrders.filter((order) => {
+  const filteredOrders = testOrders.filter((order) => {
     if (activeTab === "All Orders") return true;
     return order.status === activeTab;
   });
@@ -748,6 +756,27 @@ export const TestOrdersPage = () => {
           </Table>
         </TableWrapper>
       </TableContainer>
+
+      {/* Update Test Order Modal */}
+      <UpdateTestOrderModal
+        show={showUpdateModal}
+        onClose={() => {
+          setShowUpdateModal(false);
+          setSelectedOrder(null);
+        }}
+        order={selectedOrder}
+        onSubmit={(updatedOrder) => {
+          setTestOrders((prev) =>
+            prev.map((order) =>
+              order.orderNumber === updatedOrder.orderNumber
+                ? updatedOrder
+                : order
+            )
+          );
+          setShowUpdateModal(false);
+          setSelectedOrder(null);
+        }}
+      />
     </Container>
   );
 };

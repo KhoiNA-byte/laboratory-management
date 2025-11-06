@@ -7,6 +7,7 @@ interface UserState {
   error: string | null;
   createSuccess: boolean;
   updateSuccess: boolean;
+  deleteSuccess: boolean;
   successMessage: string | null;
 }
 
@@ -16,6 +17,7 @@ const initialState: UserState = {
   error: null,
   createSuccess: false,
   updateSuccess: false,
+  deleteSuccess: false,
   successMessage: null,
 };
 
@@ -29,6 +31,7 @@ const userSlice = createSlice({
       state.successMessage = null;
       state.createSuccess = false;
       state.updateSuccess = false;
+      state.deleteSuccess = false;
     },
 
     // Clear specific success
@@ -38,6 +41,10 @@ const userSlice = createSlice({
     },
     clearUpdateSuccess: (state) => {
       state.updateSuccess = false;
+      state.successMessage = null;
+    },
+    clearDeleteSuccess: (state) => {
+      state.deleteSuccess = false;
       state.successMessage = null;
     },
 
@@ -96,6 +103,24 @@ const userSlice = createSlice({
       state.error = action.payload;
       state.updateSuccess = false;
     },
+
+    // Delete user
+    deleteUserRequest: (state, _action: PayloadAction<{ id: string; userId?: string }>) => {
+      state.loading = true;
+      state.error = null;
+      state.deleteSuccess = false;
+    },
+    deleteUserSuccess: (state, action: PayloadAction<{ id: string }>) => {
+      state.loading = false;
+      state.users = state.users.filter((u) => u.id !== action.payload.id);
+      state.deleteSuccess = true;
+      state.successMessage = "User deleted successfully!";
+    },
+    deleteUserFailure: (state, action: PayloadAction<string>) => {
+      state.loading = false;
+      state.error = action.payload;
+      state.deleteSuccess = false;
+    },
   },
 });
 
@@ -103,6 +128,7 @@ export const {
   clearMessages,
   clearCreateSuccess,
   clearUpdateSuccess,
+  clearDeleteSuccess,
   getUsersRequest,
   getUsersSuccess,
   getUsersFailure,
@@ -112,6 +138,9 @@ export const {
   updateUserRequest,
   updateUserSuccess,
   updateUserFailure,
+  deleteUserRequest,
+  deleteUserSuccess,
+  deleteUserFailure,
 } = userSlice.actions;
 
 export default userSlice.reducer;

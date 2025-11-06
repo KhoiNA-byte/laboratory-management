@@ -1,56 +1,88 @@
 import React, { useState } from 'react'
+import CreateRoleModal from '../../components/RolesPage/CreateRoleModal'
+import ViewRoleModal from '../../components/RolesPage/ViewRoleModal'
+import EditRoleModal from '../../components/RolesPage/EditRoleModal'
+import DeleteRoleModal from '../../components/RolesPage/DeleteRoleModal'
 
 export const RolesPage = () => {
   const [searchTerm, setSearchTerm] = useState('')
+  const [showCreate, setShowCreate] = useState(false)
+  const [showView, setShowView] = useState(false)
+  const [showEdit, setShowEdit] = useState(false)
+  const [showDelete, setShowDelete] = useState(false)
+  const [selectedRole, setSelectedRole] = useState<any>(null)
+  const [createForm, setCreateForm] = useState({
+    name: '',
+    code: '',
+    description: '',
+    privileges: [] as string[],
+  })
 
   // Mock data for demonstration
-  const mockRoles = [
+  const initialRoles = [
     {
       id: '1',
       name: 'Administrator',
+      code: 'ADMIN',
       description: 'Full system access with all permissions',
       permissions: ['users', 'roles', 'patients', 'tests', 'instruments', 'warehouse', 'monitoring', 'reports', 'settings', 'audit', 'dashboard'],
       userCount: 1,
       status: 'Active',
-      icon: 'shield'
+      icon: 'shield',
+      createdAt: '01/15/2024',
+      updatedAt: '10/01/2025'
     },
     {
       id: '2',
       name: 'Laboratory Manager',
+      code: 'LAB_MANAGER',
       description: 'Manages lab operations, users, and monitors system',
       permissions: ['users', 'roles', 'patients', 'tests', 'instruments', 'warehouse', 'monitoring', 'reports'],
       userCount: 2,
       status: 'Active',
-      icon: 'flask'
+      icon: 'flask',
+      createdAt: '02/10/2024',
+      updatedAt: '09/20/2025'
     },
     {
       id: '3',
       name: 'Service',
+      code: 'SERVICE',
       description: 'Service and maintenance access for instruments and warehouse',
       permissions: ['instruments', 'warehouse', 'monitoring', 'reports', 'maintenance'],
       userCount: 3,
       status: 'Active',
-      icon: 'wrench'
+      icon: 'wrench',
+      createdAt: '03/05/2024',
+      updatedAt: '08/15/2025'
     },
     {
       id: '4',
       name: 'Lab User',
+      code: 'LAB_USER',
       description: 'Standard laboratory user with patient and test access',
       permissions: ['patients', 'tests', 'instruments', 'warehouse', 'reports'],
       userCount: 8,
       status: 'Active',
-      icon: 'user'
+      icon: 'user',
+      createdAt: '03/20/2024',
+      updatedAt: '07/10/2025'
     },
     {
       id: '5',
       name: 'Normal User (Patient)',
+      code: 'PATIENT',
       description: 'Basic access for patients to view their test results',
       permissions: ['tests', 'patients'],
       userCount: 15,
       status: 'Active',
-      icon: 'user-circle'
+      icon: 'user-circle',
+      createdAt: '04/01/2024',
+      updatedAt: '06/30/2025'
     }
   ]
+
+  const [roles, setRoles] = useState(initialRoles)
 
   const getPermissionBadgeColor = (permission: string) => {
     if (['users', 'roles', 'patients', 'tests'].includes(permission)) {
@@ -106,7 +138,10 @@ export const RolesPage = () => {
               <h3 className="text-lg font-semibold text-gray-900">System Roles</h3>
               <p className="text-sm text-gray-600">Define roles and their associated permissions</p>
             </div>
-            <button className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center gap-2">
+            <button onClick={() => {
+              setCreateForm({ name: '', code: '', description: '', privileges: [] })
+              setShowCreate(true)
+            }} className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center gap-2">
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
@@ -118,8 +153,15 @@ export const RolesPage = () => {
         {/* Roles Grid */}
         <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {mockRoles.map((role) => (
-              <div key={role.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+            {roles.map((role) => (
+              <div
+                key={role.id}
+                onClick={() => {
+                  setSelectedRole(role)
+                  setShowView(true)
+                }}
+                className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow cursor-pointer"
+              >
                 {/* Role Icon and Header */}
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center">
@@ -157,14 +199,26 @@ export const RolesPage = () => {
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center justify-end gap-2">
-                  <button className="flex items-center px-3 py-1 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors">
+                <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    onClick={() => {
+                      setSelectedRole(role)
+                      setShowEdit(true)
+                    }}
+                    className="flex items-center px-3 py-1 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors"
+                  >
                     <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                     </svg>
                     Edit
                   </button>
-                  <button className="flex items-center px-3 py-1 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors">
+                  <button
+                    onClick={() => {
+                      setSelectedRole(role)
+                      setShowDelete(true)
+                    }}
+                    className="flex items-center px-3 py-1 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors"
+                  >
                     <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
@@ -176,6 +230,61 @@ export const RolesPage = () => {
           </div>
         </div>
       </div>
+      {/* Create Role Modal */}
+      <CreateRoleModal
+        show={showCreate}
+        onClose={() => setShowCreate(false)}
+        formData={createForm}
+        setFormData={setCreateForm}
+        onSubmit={(e) => {
+          e.preventDefault()
+          // If no privileges selected, default to read-only
+          const privileges = createForm.privileges.length === 0 ? ['read'] : createForm.privileges
+          console.log('Create role:', { ...createForm, privileges })
+          setShowCreate(false)
+        }}
+      />
+      {/* View Role Modal (Edit) */}
+      <ViewRoleModal
+        show={showView}
+        onClose={() => { setShowView(false); setSelectedRole(null) }}
+        role={selectedRole}
+      />
+      {/* Edit Role Modal */}
+      <EditRoleModal
+        show={showEdit}
+        onClose={() => {
+          setShowEdit(false)
+          setSelectedRole(null)
+        }}
+        role={selectedRole}
+        onSubmit={(updated) => {
+          const updatedAt = new Date().toLocaleDateString('en-US', {
+            month: '2-digit',
+            day: '2-digit',
+            year: 'numeric'
+          })
+          setRoles(roles.map((r) => (r.id === updated.id ? { ...r, ...updated, updatedAt } : r)))
+          setShowEdit(false)
+          setSelectedRole(null)
+        }}
+      />
+      {/* Delete Role Modal */}
+      <DeleteRoleModal
+        show={showDelete}
+        onCancel={() => {
+          setShowDelete(false)
+          setSelectedRole(null)
+        }}
+        onConfirm={() => {
+          if (selectedRole) {
+            setRoles(roles.filter((r) => r.id !== selectedRole.id))
+          }
+          setShowDelete(false)
+          setSelectedRole(null)
+        }}
+        roleName={selectedRole?.name || ''}
+      />
     </div>
   )
 }

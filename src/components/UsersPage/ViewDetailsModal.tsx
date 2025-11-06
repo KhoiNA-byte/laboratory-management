@@ -8,6 +8,7 @@ interface User {
   gender: string;
   role: string;
   age: number;
+  dateOfBirth?: string;
   address: string;
   lastLogin: string;
   status?: string;
@@ -40,7 +41,7 @@ const ViewDetailsModal: React.FC<ViewDetailsModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl p-6 relative max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg p-6 relative max-h-[90vh] overflow-y-auto">
         {/* Close Button */}
         <button
           onClick={onClose}
@@ -61,118 +62,149 @@ const ViewDetailsModal: React.FC<ViewDetailsModalProps> = ({
           </svg>
         </button>
 
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">
-          User Details
-        </h2>
+        {/* Title and Subtitle */}
+        <div className="mb-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-1">
+            User Information
+          </h2>
+          <p className="text-sm text-gray-500">View user information</p>
+        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Personal Information */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900 border-b pb-2">
-              Personal Information
-            </h3>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Full Name
-              </label>
-              <p className="mt-1 text-sm text-gray-900">{user.name}</p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Identity Number
-              </label>
-              <p className="mt-1 text-sm text-gray-900">{user.id}</p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Age
-              </label>
-              <p className="mt-1 text-sm text-gray-900">{user.age} years</p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Gender
-              </label>
-              <p className="mt-1 text-sm text-gray-900">{user.gender}</p>
-            </div>
-          </div>
-
-          {/* Contact & Account Information */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900 border-b pb-2">
-              Contact & Account
-            </h3>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Email
-              </label>
-              <p className="mt-1 text-sm text-gray-900">{user.email}</p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Phone
-              </label>
-              <p className="mt-1 text-sm text-gray-900">{user.phone}</p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Role
-              </label>
-              <p className="mt-1 text-sm text-gray-900">
-                {getDisplayRole(user.role)} {/* Use display name here */}
-              </p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Last Login
-              </label>
-              <p className="mt-1 text-sm text-gray-900">{user.lastLogin}</p>
-            </div>
-          </div>
-
-          {/* Address (Full Width) */}
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700">
-              Address
+        {/* Form Layout */}
+        <form className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {/* Full Name - Full Width */}
+          <div className="sm:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Full Name *
             </label>
-            <p className="mt-1 text-sm text-gray-900">
-              {user.address || "No address provided"}
-            </p>
+            <input
+              type="text"
+              value={user.name}
+              readOnly
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 cursor-default"
+            />
           </div>
 
-          {/* Status */}
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700">
-              Status
+          {/* Email */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Email *
             </label>
-            <span
-              className={`inline-flex mt-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                user.status === "active"
-                  ? "bg-green-100 text-green-800"
-                  : "bg-red-100 text-red-800"
-              }`}
+            <input
+              type="email"
+              value={user.email}
+              readOnly
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 cursor-default"
+            />
+          </div>
+
+          {/* Phone Number */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Phone Number *
+            </label>
+            <input
+              type="text"
+              value={user.phone}
+              readOnly
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 cursor-default"
+            />
+          </div>
+
+          {/* Identify Number */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Identify Number *
+            </label>
+            <input
+              type="text"
+              value={user.id}
+              readOnly
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 cursor-default"
+            />
+          </div>
+
+          {/* Gender */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Gender *
+            </label>
+            <select
+              value={user.gender}
+              disabled
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 cursor-default"
             >
-              {user.status === "active" ? "Active" : "Inactive"}
-            </span>
+              <option>{user.gender}</option>
+            </select>
           </div>
-        </div>
 
-        <div className="flex justify-end mt-6">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
-          >
-            Close
-          </button>
-        </div>
+          {/* Empty div for spacing - Role will be in right column */}
+          <div></div>
+
+          {/* Role */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Role *
+            </label>
+            <input
+              type="text"
+              value={getDisplayRole(user.role)}
+              readOnly
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 cursor-default"
+            />
+          </div>
+
+          {/* Age */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Age *
+            </label>
+            <input
+              type="number"
+              value={user.age}
+              readOnly
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 cursor-default"
+            />
+          </div>
+
+          {/* Date of Birth */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Date of Birth *
+            </label>
+            <input
+              type="text"
+              value={user.dateOfBirth || ""}
+              readOnly
+              placeholder="DD/MM/YYYY"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 cursor-default"
+            />
+          </div>
+
+          {/* Address - Full Width */}
+          <div className="sm:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Address *
+            </label>
+            <input
+              type="text"
+              value={user.address || ""}
+              readOnly
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 cursor-default"
+            />
+          </div>
+
+          {/* Cancel Button */}
+          <div className="flex justify-end mt-6 sm:col-span-2">
+            <button
+              onClick={onClose}
+              type="button"
+              className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

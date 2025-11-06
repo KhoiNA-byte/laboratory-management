@@ -33,7 +33,7 @@ const MOCK_DATA: Record<string, OrderData> = {
     patientName: "Tran Gia Huy",
     sex: "Female",
     collected: "2025-01-13 08:35",
-    instrument: "Cobas c311",
+    instrument: "Cobas 311",
     criticalCount: 2,
     rows: [
       {
@@ -319,215 +319,236 @@ export default function TestResultDetailPage(): JSX.Element {
               className="bg-white rounded-2xl shadow-2xl w-full max-w-[1100px] mx-auto overflow-hidden
                             flex flex-col h-[calc(100vh-4rem)] md:h-auto"
             >
-              {/* Header area (kept minimal) */}
-              <div className="px-6 py-4 border-b border-gray-100 flex items-start justify-between">
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-900">
-                    Complete Blood Count (CBC)
-                  </h2>
-                  <div className="text-sm text-gray-500 mt-1 py-2">
-                    {orderNumber} • {orderData.patientName}{" "}
-                    <p className="mx-2 py-1"></p> Sex: {orderData.sex}
+              {/* Header area */}
+              <div className="px-6 py-4 border-b border-gray-100">
+                <div className="flex items-start justify-between">
+                  {/* Left: Title and Patient Info */}
+                  <div className="flex-1">
+                    <h2 className="text-xl font-bold text-gray-900 mb-2">
+                      Complete Blood Count (CBC)
+                    </h2>
+                    <div className="text-sm text-gray-600 space-y-1">
+                      <div>{orderData.patientName}</div>
+                      <div>{orderNumber}</div>
+                      <div>Sex: {orderData.sex}</div>
+                    </div>
                   </div>
-                </div>
-                <div className="block  gap-3">
-                  <div className="text-sm text-gray-500">
-                    Collected: {orderData.collected}
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    Instrument: {orderData.instrument}
-                  </div>
-                  <div className="mt-3 inline-flex items-center gap-2">
-                    <span className="inline-block bg-red-600 text-white text-sm font-medium px-3 py-1 rounded-full">
-                      {orderData.criticalCount} Critical Values
-                    </span>
+                  {/* Right: Collected and Instrument */}
+                  <div className="text-right text-sm text-gray-600 space-y-1">
+                    <div>Collected: {orderData.collected}</div>
+                    <div>Instrument: {orderData.instrument}</div>
                   </div>
                 </div>
               </div>
 
               {/* Main content: make scrollable while footer fixed */}
-              <div className="flex-1 overflow-auto p-4">
+              <div className="flex-1 overflow-auto p-6">
                 {/* inner layout switches to column on small screens */}
-                <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex flex-col md:flex-row gap-6">
                   {/* Left: table - allow its own internal scrolling if needed */}
                   <div className="flex-1 min-w-0">
                     <div className="overflow-x-auto">
-                      <div className="max-h-[55vh] md:max-h-[60vh] overflow-auto">
-                        <table className="w-full text-left">
-                          <thead>
-                            <tr className="text-sm text-gray-500 border-b border-gray-100">
-                              <th className="py-3 pr-6">Parameter</th>
-                              <th className="py-3 pr-6">Result</th>
-                              <th className="py-3 pr-6">Unit</th>
-                              <th className="py-3 pr-6">Reference range</th>
-                              <th className="py-3 pr-6">Deviation</th>
-                              <th className="py-3 pr-6">Flag</th>
-                              <th className="py-3 pr-6">Applied Evaluate</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {rowsState.map((r, idx) => {
-                              const isHighlighted =
-                                r.flag === "High" ||
-                                r.flag === "Critical" ||
-                                r.flag === "Low";
-                              return (
-                                <tr
-                                  key={r.parameter}
-                                  className="align-top border-b border-gray-100"
-                                >
-                                  <td className="py-4 pr-6 font-semibold text-gray-700 w-48 truncate">
-                                    {r.parameter}
-                                  </td>
+                      <table className="w-full text-left border-collapse">
+                        <thead>
+                          <tr className="text-sm text-gray-500 border-b border-gray-200">
+                            <th className="py-3 pr-6 font-medium">Parameter</th>
+                            <th className="py-3 pr-6 font-medium">Result</th>
+                            <th className="py-3 pr-6 font-medium">Unit</th>
+                            <th className="py-3 pr-6 font-medium">Reference range</th>
+                            <th className="py-3 pr-6 font-medium">Deviation</th>
+                            <th className="py-3 pr-6 font-medium">Flag</th>
+                            <th className="py-3 pr-6 font-medium">Applied Rule</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {rowsState.map((r, idx) => {
+                            const isHigh = r.flag === "High" || r.flag === "Critical";
+                            const isLow = r.flag === "Low";
+                            const isHighlighted = isHigh || isLow;
+                            return (
+                              <tr
+                                key={r.parameter}
+                                className="align-top border-b border-gray-100"
+                              >
+                                <td className="py-4 pr-6 font-semibold text-gray-700">
+                                  {r.parameter}
+                                </td>
 
-                                  <td className="py-4 pr-6">
-                                    {isReviewing ? (
-                                      <input
-                                        type="text"
-                                        value={r.result}
-                                        onChange={(e) =>
-                                          handleFieldChange(
-                                            idx,
-                                            "result",
-                                            e.target.value
-                                          )
-                                        }
-                                        className="w-36 px-2 py-1 border rounded text-sm"
-                                      />
-                                    ) : (
-                                      <div
-                                        className={`inline-block px-3 py-1 rounded ${
-                                          isHighlighted
-                                            ? "bg-red-50 text-red-700 font-semibold"
-                                            : ""
-                                        }`}
-                                      >
-                                        {r.result}
-                                      </div>
-                                    )}
-                                  </td>
+                                <td className="py-4 pr-6">
+                                  {isReviewing ? (
+                                    <input
+                                      type="text"
+                                      value={r.result}
+                                      onChange={(e) =>
+                                        handleFieldChange(
+                                          idx,
+                                          "result",
+                                          e.target.value
+                                        )
+                                      }
+                                      className="w-36 px-2 py-1 border rounded text-sm"
+                                    />
+                                  ) : (
+                                    <span
+                                      className={`font-semibold ${
+                                        isHigh
+                                          ? "text-red-600"
+                                          : isLow
+                                          ? "text-orange-600"
+                                          : "text-gray-900"
+                                      }`}
+                                    >
+                                      {r.result}
+                                    </span>
+                                  )}
+                                </td>
 
-                                  <td className="py-4 pr-6 text-sm text-gray-600">
-                                    {r.unit}
-                                  </td>
-                                  <td className="py-4 pr-6 text-sm text-gray-600">
-                                    {r.referenceRange}
-                                  </td>
+                                <td className="py-4 pr-6 text-sm text-gray-600">
+                                  {r.unit}
+                                </td>
+                                <td className="py-4 pr-6 text-sm text-gray-600">
+                                  {r.referenceRange}
+                                </td>
 
-                                  <td className="py-4 pr-6 text-sm text-gray-600">
-                                    {isReviewing ? (
-                                      <input
-                                        type="text"
-                                        value={r.deviation ?? ""}
-                                        onChange={(e) =>
-                                          handleFieldChange(
-                                            idx,
-                                            "deviation",
-                                            e.target.value
-                                          )
-                                        }
-                                        className="w-28 px-2 py-1 border rounded text-sm"
-                                        placeholder="-"
-                                      />
-                                    ) : (
-                                      r.deviation ?? "-"
-                                    )}
-                                  </td>
+                                <td className="py-4 pr-6 text-sm text-gray-600">
+                                  {isReviewing ? (
+                                    <input
+                                      type="text"
+                                      value={r.deviation ?? ""}
+                                      onChange={(e) =>
+                                        handleFieldChange(
+                                          idx,
+                                          "deviation",
+                                          e.target.value
+                                        )
+                                      }
+                                      className="w-28 px-2 py-1 border rounded text-sm"
+                                      placeholder="-"
+                                    />
+                                  ) : (
+                                    r.deviation ?? "-"
+                                  )}
+                                </td>
 
-                                  <td className="py-4 pr-6">
-                                    <div className="flex items-center gap-2">
-                                      <FlagDot flag={r.flag} />
-                                      <span className="text-sm text-gray-600">
-                                        {r.flag ?? "Normal"}
-                                      </span>
-                                    </div>
-                                  </td>
+                                <td className="py-4 pr-6">
+                                  <div className="flex items-center gap-2">
+                                    <FlagDot flag={r.flag} />
+                                    <span className="text-sm text-gray-600">
+                                      {r.flag ?? "Normal"}
+                                    </span>
+                                  </div>
+                                </td>
 
-                                  <td className="py-4 pr-6 text-sm text-gray-600">
-                                    {isReviewing ? (
-                                      <input
-                                        type="text"
-                                        value={r.appliedEvaluate ?? ""}
-                                        onChange={(e) =>
-                                          handleFieldChange(
-                                            idx,
-                                            "appliedEvaluate",
-                                            e.target.value
-                                          )
-                                        }
-                                        className="w-40 px-2 py-1 border rounded text-sm"
-                                        placeholder="-"
-                                      />
-                                    ) : (
-                                      r.appliedEvaluate ?? "-"
-                                    )}
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
+                                <td className="py-4 pr-6 text-sm text-gray-600">
+                                  {isReviewing ? (
+                                    <input
+                                      type="text"
+                                      value={r.appliedEvaluate ?? ""}
+                                      onChange={(e) =>
+                                        handleFieldChange(
+                                          idx,
+                                          "appliedEvaluate",
+                                          e.target.value
+                                        )
+                                      }
+                                      className="w-40 px-2 py-1 border rounded text-sm"
+                                      placeholder="-"
+                                    />
+                                  ) : (
+                                    r.appliedEvaluate ?? "-"
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                    
+                    {/* Comment section below table */}
+                    <div className="mt-6 text-sm text-gray-700">
+                      <div className="mb-2">
+                        <strong>Comment:</strong> {latestComment ? latestComment.text : "Retest MCHC"}
                       </div>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          openComments();
+                        }}
+                        className="text-blue-600 hover:underline"
+                      >
+                        More comment
+                      </button>
                     </div>
                   </div>
 
                   {/* Right: summary & actions - on small screens it goes under the table */}
-                  <div className="w-full md:w-[320px] flex-shrink-0">
-                    <div className="space-y-4">
-                      <div className="bg-white rounded-lg shadow-md p-4 border">
+                  <div className="w-full md:w-[320px] flex-shrink-0 relative">
+                    {/* Badge Critical Values at top right */}
+                    <div className="absolute -top-2 -right-2 z-10">
+                      <span className="inline-block bg-red-600 text-white text-xs font-medium px-3 py-1 rounded">
+                        {orderData.criticalCount} Critical Values
+                      </span>
+                    </div>
+                    
+                    <div className="space-y-4 bg-white rounded-lg shadow-md p-4 border">
+                      <div>
                         <h4 className="text-sm font-semibold text-gray-700 mb-3">
                           Summary
                         </h4>
                         <ul className="text-sm text-gray-600 space-y-2">
                           <li className="flex justify-between">
                             <span>Total tests</span>
-                            <strong>{total}</strong>
+                            <strong className="text-gray-900">{total}</strong>
                           </li>
                           <li className="flex justify-between">
                             <span>Normal</span>
-                            <strong>{normal}</strong>
+                            <strong className="text-gray-900">{normal}</strong>
                           </li>
                           <li className="flex justify-between">
                             <span>High</span>
-                            <strong>{high}</strong>
+                            <strong className="text-gray-900">{high}</strong>
                           </li>
                           <li className="flex justify-between">
                             <span>Low</span>
-                            <strong>{low}</strong>
+                            <strong className="text-gray-900">{low}</strong>
                           </li>
                         </ul>
                       </div>
 
-                      <div className="bg-white rounded-lg shadow-md p-4 border">
+                      <div className="pt-4 border-t border-gray-200">
                         <h4 className="text-sm font-semibold text-gray-700 mb-3">
                           Reviewed
                         </h4>
-                        <div className="text-sm text-gray-600">By</div>
-                        <div className="mt-3 text-sm font-medium">
+                        <div className="text-sm text-gray-600 mb-1">By</div>
+                        <div className="text-sm font-medium text-blue-600">
                           {reviewedBy}
-                          {reviewedAt
-                            ? ` • ${new Date(reviewedAt).toLocaleString()}`
-                            : ""}
                         </div>
                       </div>
 
-                      <div className="bg-white rounded-lg shadow-md p-4 border">
+                      <div className="pt-4 border-t border-gray-200">
                         <h4 className="text-sm font-semibold text-gray-700 mb-3">
                           Actions
                         </h4>
-                        <div className="space-y-3">
+                        <div className="space-y-2">
                           <button
                             type="button"
                             onClick={handleDownloadPdf}
-                            className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 border rounded-lg text-sm text-gray-700 hover:shadow"
+                            className="w-full text-left px-0 py-1 text-sm text-gray-600 hover:text-gray-900"
                           >
-                            <ArrowDownTrayIcon className="h-4 w-4" />
                             Download PDF
                           </button>
                           <button
                             type="button"
+                            onClick={() => alert("Request Reprocess (placeholder)")}
+                            className="w-full text-left px-0 py-1 text-sm text-gray-600 hover:text-gray-900"
+                          >
+                            Request Reprocess
+                          </button>
+                          <button
+                            type="button"
                             onClick={handleViewHL7}
-                            className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 border rounded-lg text-sm text-gray-700 hover:shadow"
+                            className="w-full text-left px-0 py-1 text-sm text-gray-600 hover:text-gray-900"
                           >
                             View Raw HL7
                           </button>
@@ -538,63 +559,28 @@ export default function TestResultDetailPage(): JSX.Element {
                 </div>
               </div>
 
-              {/* Footer fixed at bottom of modal - responsive spacing */}
-              <div className="px-8 py-6 border-t border-gray-100 flex items-center justify-between">
-                {/* Comment preview: show latest comment truncated to one line with ellipsis */}
-                <div className="text-sm text-gray-700 max-w-[60%]">
-                  <div className="flex items-center gap-2">
-                    <strong>Comment:</strong>
+              {/* Footer fixed at bottom of modal */}
+              <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-end gap-3">
+                <button
+                  onClick={() => {
+                    if (isReviewing) handleCancelReview();
+                    else navigate(-1);
+                  }}
+                  className="px-4 py-2 rounded-lg text-sm text-gray-600 hover:text-gray-900"
+                >
+                  Cancel
+                </button>
 
-                    {latestComment ? (
-                      <span
-                        className="flex-1 truncate whitespace-nowrap overflow-hidden text-ellipsis"
-                        title={`${latestComment.author}: ${latestComment.text}`} /* hover hiện full */
-                      >
-                        <span className="font-bold">
-                          ({latestComment.author})
-                        </span>{" "}
-                        {latestComment.text}
-                      </span>
-                    ) : (
-                      <span>Empty</span>
-                    )}
-                  </div>
-
-                  <div className="mt-2">
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        openComments();
-                      }}
-                      className="text-blue-600 underline"
-                    >
-                      More comment
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => {
-                      if (isReviewing) handleCancelReview();
-                      else navigate(-1);
-                    }}
-                    className="px-4 py-2 rounded-lg border text-sm text-gray-700 hover:shadow"
-                  >
-                    {isReviewing ? "Cancel" : "Cancel"}
-                  </button>
-
-                  <button
-                    onClick={handleReview}
-                    className={`px-4 py-2 rounded-lg text-sm ${
-                      isReviewing
-                        ? "bg-green-600 text-white hover:bg-green-700"
-                        : "bg-blue-600 text-white hover:bg-blue-700"
-                    }`}
-                  >
-                    {isReviewing ? "Save" : "Review"}
-                  </button>
-                </div>
+                <button
+                  onClick={handleReview}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                    isReviewing
+                      ? "bg-green-600 text-white hover:bg-green-700"
+                      : "bg-blue-600 text-white hover:bg-blue-700"
+                  }`}
+                >
+                  {isReviewing ? "Save" : "Review"}
+                </button>
               </div>
 
               {/* Close icon (absolute inside modal) */}

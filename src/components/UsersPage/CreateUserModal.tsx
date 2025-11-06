@@ -73,6 +73,39 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
         }
         break;
 
+      case "dateOfBirth":
+        const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+        if (!value || !dateRegex.test(value.toString())) {
+          errors.dateOfBirth = "Please enter date in DD/MM/YYYY format";
+        } else {
+          const [, day, month, year] = value.toString().match(dateRegex) || [];
+          const dayNum = parseInt(day, 10);
+          const monthNum = parseInt(month, 10);
+          const yearNum = parseInt(year, 10);
+          
+          // Validate date ranges
+          if (dayNum < 1 || dayNum > 31) {
+            errors.dateOfBirth = "Day must be between 1 and 31";
+          } else if (monthNum < 1 || monthNum > 12) {
+            errors.dateOfBirth = "Month must be between 1 and 12";
+          } else if (yearNum < 1900 || yearNum > new Date().getFullYear()) {
+            errors.dateOfBirth = `Year must be between 1900 and ${new Date().getFullYear()}`;
+          } else {
+            // Check if date is valid
+            const date = new Date(yearNum, monthNum - 1, dayNum);
+            if (
+              date.getDate() !== dayNum ||
+              date.getMonth() !== monthNum - 1 ||
+              date.getFullYear() !== yearNum
+            ) {
+              errors.dateOfBirth = "Please enter a valid date";
+            } else {
+              delete errors.dateOfBirth;
+            }
+          }
+        }
+        break;
+
       case "address":
         if (!value || value.toString().trim().length < 5) {
           errors.address = "Address must be at least 5 characters long";
@@ -97,8 +130,24 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-    validateField(name, value);
+    
+    // Format date input for dateOfBirth field
+    let formattedValue = value;
+    if (name === "dateOfBirth") {
+      // Remove all non-digit characters
+      const digits = value.replace(/\D/g, "");
+      // Format as DD/MM/YYYY
+      if (digits.length <= 2) {
+        formattedValue = digits;
+      } else if (digits.length <= 4) {
+        formattedValue = `${digits.slice(0, 2)}/${digits.slice(2)}`;
+      } else {
+        formattedValue = `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4, 8)}`;
+      }
+    }
+    
+    setFormData({ ...formData, [name]: formattedValue });
+    validateField(name, formattedValue);
   };
 
   const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -111,6 +160,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
       phone: formData.phone,
       id: formData.id,
       age: formData.age,
+      dateOfBirth: formData.dateOfBirth,
       address: formData.address,
       password: formData.password,
     };
@@ -133,6 +183,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
       formData.phone &&
       formData.id &&
       formData.age &&
+      formData.dateOfBirth &&
       formData.address &&
       formData.password
     );
@@ -173,7 +224,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
           className="grid grid-cols-1 gap-4 sm:grid-cols-2"
         >
           {/* Full Name */}
-          <div>
+          <div className="sm:col-span-2">
             <label className="block text-sm font-medium text-gray-700">
               Full Name *
             </label>
@@ -311,6 +362,29 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
             {validationErrors.age && (
               <p className="mt-1 text-sm text-red-600">
                 {validationErrors.age}
+              </p>
+            )}
+          </div>
+
+          {/* Date of Birth */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Date of Birth *
+            </label>
+            <input
+              type="text"
+              name="dateOfBirth"
+              value={formData.dateOfBirth}
+              onChange={handleInputChange}
+              placeholder="DD/MM/YYYY"
+              maxLength={10}
+              className={`mt-1 w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 ${
+                validationErrors.dateOfBirth ? "border-red-300" : "border-gray-300"
+              }`}
+            />
+            {validationErrors.dateOfBirth && (
+              <p className="mt-1 text-sm text-red-600">
+                {validationErrors.dateOfBirth}
               </p>
             )}
           </div>

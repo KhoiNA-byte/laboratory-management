@@ -3,12 +3,14 @@ import { USERS_ENDPOINT } from "./apiConfig";
 
 export interface User {
   id: string;
+  userId?: string;
   name: string;
   email: string;
   phone: string;
   gender: string;
   role: string;
   age: number;
+  dateOfBirth?: string;
   address: string;
   password?: string;
   status: string;
@@ -92,6 +94,23 @@ export const updateUserAPI = async (userData: User): Promise<User> => {
     return await response.json();
   } catch (error) {
     console.error("Error updating user:", error);
+    throw error;
+  }
+};
+
+// Delete a user
+export const deleteUserAPI = async (user: { id: string; userId?: string }): Promise<void> => {
+  try {
+    const targetId = user.userId || user.id;
+    const response = await fetch(`${USERS_ENDPOINT}/${targetId}`, {
+      method: "DELETE",
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to delete user: ${response.status}`);
+    }
+    return;
+  } catch (error) {
+    console.error("Error deleting user:", error);
     throw error;
   }
 };

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import DeletePatientModal from '../../components/Patients/DeletePatientModal'
 import { useNavigate } from 'react-router-dom'
 
 export const PatientsPage = () => {
@@ -6,6 +7,8 @@ export const PatientsPage = () => {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
   const navigate = useNavigate()
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const [showDelete, setShowDelete] = useState(false)
+  const [selectedPatient, setSelectedPatient] = useState<{ mrn: string; name: string } | null>(null)
 
   // State for managing patients list
   const [patients, setPatients] = useState([
@@ -106,30 +109,11 @@ export const PatientsPage = () => {
   }
 
   const handleDeletePatient = (mrn: string) => {
-    console.log('Delete patient requested for MRN:', mrn)
-
-    // Show confirmation dialog
-    const confirmed = window.confirm(`Are you sure you want to delete patient ${mrn}? This action cannot be undone.`)
-
-    if (confirmed) {
-      console.log('User confirmed deletion for patient:', mrn)
-
-      // Remove the patient from state
-      setPatients(prevPatients => {
-        const updatedPatients = prevPatients.filter(patient => patient.mrn !== mrn)
-        console.log('Patients before deletion:', prevPatients.length)
-        console.log('Patients after deletion:', updatedPatients.length)
-        return updatedPatients
-      })
-
-      // Show success message
-      alert(`Patient ${mrn} has been deleted successfully!`)
-      console.log('Patient deleted successfully')
-    } else {
-      console.log('User cancelled deletion')
+    const patient = patients.find((p) => p.mrn === mrn)
+    if (patient) {
+      setSelectedPatient({ mrn: patient.mrn, name: patient.name })
+      setShowDelete(true)
     }
-
-    // Close dropdown after action
     setOpenDropdown(null)
   }
 
@@ -387,6 +371,18 @@ export const PatientsPage = () => {
           </table>
         </div>
       </div>
+      <DeletePatientModal
+        show={showDelete}
+        patientName={selectedPatient?.name || ''}
+        onCancel={() => { setShowDelete(false); setSelectedPatient(null) }}
+        onConfirm={() => {
+          if (selectedPatient) {
+            setPatients(prev => prev.filter(p => p.mrn !== selectedPatient.mrn))
+          }
+          setShowDelete(false)
+          setSelectedPatient(null)
+        }}
+      />
     </div>
   )
 }
