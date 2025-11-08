@@ -128,11 +128,10 @@ export const LoginPage = () => {
             <button
               type="submit"
               disabled={loading}
-              className={`w-full font-semibold py-3 px-4 rounded-md transition-colors ${
-                loading
+              className={`w-full font-semibold py-3 px-4 rounded-md transition-colors ${loading
                   ? "bg-blue-400 cursor-not-allowed"
                   : "bg-blue-600 hover:bg-blue-700 text-white"
-              }`}
+                }`}
             >
               {loading ? "Signing In..." : "Sign In"}
             </button>

@@ -38,12 +38,12 @@ export const loginAPI = async (
         user.password === credentials.password
     );
 
-    if (foundUser.status === "inactive") {
-      throw new Error("User account has been deactivated");
-    }
-
     if (!foundUser) {
       throw new Error("Invalid email or password");
+    }
+
+    if (foundUser.status === "inactive") {
+      throw new Error("User account has been deactivated");
     }
 
     // Determine redirect path based on role

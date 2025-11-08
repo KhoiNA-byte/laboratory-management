@@ -1,117 +1,135 @@
 import { call, put, takeEvery, takeLatest } from 'redux-saga/effects'
 import { PayloadAction } from '@reduxjs/toolkit'
-
-// Mock API functions
-const mockGetTestOrdersAPI = async () => {
-    await new Promise(resolve => setTimeout(resolve, 900))
-    return [
-        {
-            id: '1',
-            patientId: '1',
-            patientName: 'John Doe',
-            testType: 'Complete Blood Count',
-            status: 'pending',
-            priority: 'normal',
-            orderedBy: 'Dr. Smith',
-            orderedDate: '2024-01-15T09:00:00Z',
-            expectedDate: '2024-01-16T09:00:00Z',
-            notes: 'Routine checkup'
-        },
-        {
-            id: '2',
-            patientId: '2',
-            patientName: 'Jane Smith',
-            testType: 'Lipid Panel',
-            status: 'in_progress',
-            priority: 'high',
-            orderedBy: 'Dr. Johnson',
-            orderedDate: '2024-01-15T10:30:00Z',
-            expectedDate: '2024-01-15T16:00:00Z',
-            notes: 'Follow-up for cholesterol'
-        },
-        {
-            id: '3',
-            patientId: '3',
-            patientName: 'Bob Johnson',
-            testType: 'Liver Function Test',
-            status: 'completed',
-            priority: 'normal',
-            orderedBy: 'Dr. Brown',
-            orderedDate: '2024-01-14T14:00:00Z',
-            expectedDate: '2024-01-15T14:00:00Z',
-            notes: 'Medication monitoring'
-        }
-    ]
-}
-
-const mockCreateTestOrderAPI = async (orderData: any) => {
-    await new Promise(resolve => setTimeout(resolve, 1100))
-    return {
-        id: Date.now().toString(),
-        ...orderData,
-        status: 'pending',
-        orderedDate: new Date().toISOString(),
-        createdAt: new Date().toISOString()
-    }
-}
-
-const mockUpdateTestOrderAPI = async ({ id, ...orderData }: any) => {
-    await new Promise(resolve => setTimeout(resolve, 800))
-    return {
-        id,
-        ...orderData,
-        updatedAt: new Date().toISOString()
-    }
-}
-
-const mockDeleteTestOrderAPI = async (id: string) => {
-    await new Promise(resolve => setTimeout(resolve, 600))
-    return { success: true, id }
-}
+import {
+  getAllTestOrders,
+  getTestOrderById,
+  createTestOrder,
+  updateTestOrder,
+  deleteTestOrder,
+} from '../../services/testOrderApi'
+import {
+  getAllTestResults,
+  getTestResultById,
+  createTestResult,
+  updateTestResult,
+  deleteTestResult,
+} from '../../services/testResultApi'
+import {
+  fetchTestOrdersStart,
+  fetchTestOrdersSuccess,
+  fetchTestOrdersFailure,
+  addTestOrder,
+  updateTestOrder as updateTestOrderAction,
+  deleteTestOrder as deleteTestOrderAction,
+  fetchTestResultsStart,
+  fetchTestResultsSuccess,
+  fetchTestResultsFailure,
+  addTestResult,
+  updateTestResult as updateTestResultAction,
+  deleteTestResult as deleteTestResultAction,
+} from '../slices/testOrderSlice'
 
 // Get Test Orders Saga
 function* getTestOrdersSaga() {
-    try {
-        const testOrders = yield call(mockGetTestOrdersAPI)
-        yield put({ type: 'testOrders/getTestOrdersSuccess', payload: testOrders })
-    } catch (error: any) {
-        yield put({ type: 'testOrders/getTestOrdersFailure', payload: error.message })
-    }
+  try {
+    yield put(fetchTestOrdersStart())
+    const testOrders = yield call(getAllTestOrders)
+    yield put(fetchTestOrdersSuccess(testOrders))
+  } catch (error: any) {
+    yield put(fetchTestOrdersFailure(error.message || 'Failed to fetch test orders'))
+  }
 }
 
 // Create Test Order Saga
 function* createTestOrderSaga(action: PayloadAction<any>) {
-    try {
-        const newTestOrder = yield call(mockCreateTestOrderAPI, action.payload)
-        yield put({ type: 'testOrders/createTestOrderSuccess', payload: newTestOrder })
-    } catch (error: any) {
-        yield put({ type: 'testOrders/createTestOrderFailure', payload: error.message })
-    }
+  try {
+    yield put(fetchTestOrdersStart())
+    const newTestOrder = yield call(createTestOrder, action.payload)
+    yield put(addTestOrder(newTestOrder))
+    yield put(fetchTestOrdersSuccess([])) // Clear loading
+  } catch (error: any) {
+    yield put(fetchTestOrdersFailure(error.message || 'Failed to create test order'))
+  }
 }
 
 // Update Test Order Saga
-function* updateTestOrderSaga(action: PayloadAction<any>) {
-    try {
-        const updatedTestOrder = yield call(mockUpdateTestOrderAPI, action.payload)
-        yield put({ type: 'testOrders/updateTestOrderSuccess', payload: updatedTestOrder })
-    } catch (error: any) {
-        yield put({ type: 'testOrders/updateTestOrderFailure', payload: error.message })
-    }
+function* updateTestOrderSaga(action: PayloadAction<{ id: string; testOrder: any }>) {
+  try {
+    yield put(fetchTestOrdersStart())
+    const updatedTestOrder = yield call(updateTestOrder, action.payload.id, action.payload.testOrder)
+    yield put(updateTestOrderAction(updatedTestOrder))
+    yield put(fetchTestOrdersSuccess([])) // Clear loading
+  } catch (error: any) {
+    yield put(fetchTestOrdersFailure(error.message || 'Failed to update test order'))
+  }
 }
 
 // Delete Test Order Saga
 function* deleteTestOrderSaga(action: PayloadAction<string>) {
-    try {
-        const result = yield call(mockDeleteTestOrderAPI, action.payload)
-        yield put({ type: 'testOrders/deleteTestOrderSuccess', payload: result.id })
-    } catch (error: any) {
-        yield put({ type: 'testOrders/deleteTestOrderFailure', payload: error.message })
-    }
+  try {
+    yield put(fetchTestOrdersStart())
+    yield call(deleteTestOrder, action.payload)
+    yield put(deleteTestOrderAction(action.payload))
+    yield put(fetchTestOrdersSuccess([])) // Clear loading
+  } catch (error: any) {
+    yield put(fetchTestOrdersFailure(error.message || 'Failed to delete test order'))
+  }
+}
+
+// Get Test Results Saga
+function* getTestResultsSaga() {
+  try {
+    yield put(fetchTestResultsStart())
+    const testResults = yield call(getAllTestResults)
+    yield put(fetchTestResultsSuccess(testResults))
+  } catch (error: any) {
+    yield put(fetchTestResultsFailure(error.message || 'Failed to fetch test results'))
+  }
+}
+
+// Create Test Result Saga
+function* createTestResultSaga(action: PayloadAction<any>) {
+  try {
+    yield put(fetchTestResultsStart())
+    const newTestResult = yield call(createTestResult, action.payload)
+    yield put(addTestResult(newTestResult))
+    yield put(fetchTestResultsSuccess([])) // Clear loading
+  } catch (error: any) {
+    yield put(fetchTestResultsFailure(error.message || 'Failed to create test result'))
+  }
+}
+
+// Update Test Result Saga
+function* updateTestResultSaga(action: PayloadAction<{ id: string; testResult: any }>) {
+  try {
+    yield put(fetchTestResultsStart())
+    const updatedTestResult = yield call(updateTestResult, action.payload.id, action.payload.testResult)
+    yield put(updateTestResultAction(updatedTestResult))
+    yield put(fetchTestResultsSuccess([])) // Clear loading
+  } catch (error: any) {
+    yield put(fetchTestResultsFailure(error.message || 'Failed to update test result'))
+  }
+}
+
+// Delete Test Result Saga
+function* deleteTestResultSaga(action: PayloadAction<string>) {
+  try {
+    yield put(fetchTestResultsStart())
+    yield call(deleteTestResult, action.payload)
+    yield put(deleteTestResultAction(action.payload))
+    yield put(fetchTestResultsSuccess([])) // Clear loading
+  } catch (error: any) {
+    yield put(fetchTestResultsFailure(error.message || 'Failed to delete test result'))
+  }
 }
 
 export function* testOrderSaga() {
-    yield takeEvery('testOrders/getTestOrdersRequest', getTestOrdersSaga)
-    yield takeLatest('testOrders/createTestOrderRequest', createTestOrderSaga)
-    yield takeLatest('testOrders/updateTestOrderRequest', updateTestOrderSaga)
-    yield takeLatest('testOrders/deleteTestOrderRequest', deleteTestOrderSaga)
+  yield takeEvery('testOrders/getTestOrdersRequest', getTestOrdersSaga)
+  yield takeLatest('testOrders/createTestOrderRequest', createTestOrderSaga)
+  yield takeLatest('testOrders/updateTestOrderRequest', updateTestOrderSaga)
+  yield takeLatest('testOrders/deleteTestOrderRequest', deleteTestOrderSaga)
+  yield takeEvery('testOrders/getTestResultsRequest', getTestResultsSaga)
+  yield takeLatest('testOrders/createTestResultRequest', createTestResultSaga)
+  yield takeLatest('testOrders/updateTestResultRequest', updateTestResultSaga)
+  yield takeLatest('testOrders/deleteTestResultRequest', deleteTestResultSaga)
 }

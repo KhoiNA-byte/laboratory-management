@@ -5,6 +5,7 @@ import userReducer from "./slices/userSlice";
 import patientReducer from "./slices/patientSlice";
 import testOrderReducer from "./slices/testOrderSlice";
 import instrumentReducer from "./slices/instrumentSlice";
+import rolesReducer from "./slices/rolesSlice";
 import { rootSaga } from "./sagas";
 
 const sagaMiddleware = createSagaMiddleware();
@@ -16,6 +17,7 @@ export const store = configureStore({
     patients: patientReducer,
     testOrders: testOrderReducer,
     instruments: instrumentReducer,
+    roles: rolesReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

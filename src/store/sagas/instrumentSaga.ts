@@ -1,117 +1,135 @@
 import { call, put, takeEvery, takeLatest } from 'redux-saga/effects'
 import { PayloadAction } from '@reduxjs/toolkit'
-
-// Mock API functions
-const mockGetInstrumentsAPI = async () => {
-    await new Promise(resolve => setTimeout(resolve, 800))
-    return [
-        {
-            id: '1',
-            name: 'Hematology Analyzer',
-            model: 'Sysmex XN-1000',
-            serialNumber: 'HMA001',
-            status: 'active',
-            location: 'Lab Room 1',
-            lastMaintenance: '2024-01-10',
-            nextMaintenance: '2024-02-10',
-            calibrationStatus: 'valid',
-            testsPerHour: 120
-        },
-        {
-            id: '2',
-            name: 'Chemistry Analyzer',
-            model: 'Roche Cobas 6000',
-            serialNumber: 'CHA002',
-            status: 'maintenance',
-            location: 'Lab Room 2',
-            lastMaintenance: '2024-01-15',
-            nextMaintenance: '2024-01-20',
-            calibrationStatus: 'expired',
-            testsPerHour: 200
-        },
-        {
-            id: '3',
-            name: 'Microbiology Analyzer',
-            model: 'BD Phoenix M50',
-            serialNumber: 'MBA003',
-            status: 'active',
-            location: 'Lab Room 3',
-            lastMaintenance: '2024-01-12',
-            nextMaintenance: '2024-02-12',
-            calibrationStatus: 'valid',
-            testsPerHour: 80
-        }
-    ]
-}
-
-const mockCreateInstrumentAPI = async (instrumentData: any) => {
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    return {
-        id: Date.now().toString(),
-        ...instrumentData,
-        status: 'active',
-        calibrationStatus: 'pending',
-        createdAt: new Date().toISOString()
-    }
-}
-
-const mockUpdateInstrumentAPI = async ({ id, ...instrumentData }: any) => {
-    await new Promise(resolve => setTimeout(resolve, 800))
-    return {
-        id,
-        ...instrumentData,
-        updatedAt: new Date().toISOString()
-    }
-}
-
-const mockDeleteInstrumentAPI = async (id: string) => {
-    await new Promise(resolve => setTimeout(resolve, 600))
-    return { success: true, id }
-}
+import {
+  getAllInstruments,
+  getInstrumentById,
+  createInstrument,
+  updateInstrument,
+  deleteInstrument,
+} from '../../services/instrumentApi'
+import {
+  getAllReagents,
+  getReagentById,
+  createReagent,
+  updateReagent,
+  deleteReagent,
+} from '../../services/reagentApi'
+import {
+  fetchInstrumentsStart,
+  fetchInstrumentsSuccess,
+  fetchInstrumentsFailure,
+  addInstrument,
+  updateInstrument as updateInstrumentAction,
+  deleteInstrument as deleteInstrumentAction,
+  fetchReagentsStart,
+  fetchReagentsSuccess,
+  fetchReagentsFailure,
+  addReagent,
+  updateReagent as updateReagentAction,
+  deleteReagent as deleteReagentAction,
+} from '../slices/instrumentSlice'
 
 // Get Instruments Saga
 function* getInstrumentsSaga() {
-    try {
-        const instruments = yield call(mockGetInstrumentsAPI)
-        yield put({ type: 'instruments/getInstrumentsSuccess', payload: instruments })
-    } catch (error: any) {
-        yield put({ type: 'instruments/getInstrumentsFailure', payload: error.message })
-    }
+  try {
+    yield put(fetchInstrumentsStart())
+    const instruments = yield call(getAllInstruments)
+    yield put(fetchInstrumentsSuccess(instruments))
+  } catch (error: any) {
+    yield put(fetchInstrumentsFailure(error.message || 'Failed to fetch instruments'))
+  }
 }
 
 // Create Instrument Saga
 function* createInstrumentSaga(action: PayloadAction<any>) {
-    try {
-        const newInstrument = yield call(mockCreateInstrumentAPI, action.payload)
-        yield put({ type: 'instruments/createInstrumentSuccess', payload: newInstrument })
-    } catch (error: any) {
-        yield put({ type: 'instruments/createInstrumentFailure', payload: error.message })
-    }
+  try {
+    yield put(fetchInstrumentsStart())
+    const newInstrument = yield call(createInstrument, action.payload)
+    yield put(addInstrument(newInstrument))
+    yield put(fetchInstrumentsSuccess([])) // Clear loading
+  } catch (error: any) {
+    yield put(fetchInstrumentsFailure(error.message || 'Failed to create instrument'))
+  }
 }
 
 // Update Instrument Saga
-function* updateInstrumentSaga(action: PayloadAction<any>) {
-    try {
-        const updatedInstrument = yield call(mockUpdateInstrumentAPI, action.payload)
-        yield put({ type: 'instruments/updateInstrumentSuccess', payload: updatedInstrument })
-    } catch (error: any) {
-        yield put({ type: 'instruments/updateInstrumentFailure', payload: error.message })
-    }
+function* updateInstrumentSaga(action: PayloadAction<{ id: string; instrument: any }>) {
+  try {
+    yield put(fetchInstrumentsStart())
+    const updatedInstrument = yield call(updateInstrument, action.payload.id, action.payload.instrument)
+    yield put(updateInstrumentAction(updatedInstrument))
+    yield put(fetchInstrumentsSuccess([])) // Clear loading
+  } catch (error: any) {
+    yield put(fetchInstrumentsFailure(error.message || 'Failed to update instrument'))
+  }
 }
 
 // Delete Instrument Saga
 function* deleteInstrumentSaga(action: PayloadAction<string>) {
-    try {
-        const result = yield call(mockDeleteInstrumentAPI, action.payload)
-        yield put({ type: 'instruments/deleteInstrumentSuccess', payload: result.id })
-    } catch (error: any) {
-        yield put({ type: 'instruments/deleteInstrumentFailure', payload: error.message })
-    }
+  try {
+    yield put(fetchInstrumentsStart())
+    yield call(deleteInstrument, action.payload)
+    yield put(deleteInstrumentAction(action.payload))
+    yield put(fetchInstrumentsSuccess([])) // Clear loading
+  } catch (error: any) {
+    yield put(fetchInstrumentsFailure(error.message || 'Failed to delete instrument'))
+  }
+}
+
+// Get Reagents Saga
+function* getReagentsSaga() {
+  try {
+    yield put(fetchReagentsStart())
+    const reagents = yield call(getAllReagents)
+    yield put(fetchReagentsSuccess(reagents))
+  } catch (error: any) {
+    yield put(fetchReagentsFailure(error.message || 'Failed to fetch reagents'))
+  }
+}
+
+// Create Reagent Saga
+function* createReagentSaga(action: PayloadAction<any>) {
+  try {
+    yield put(fetchReagentsStart())
+    const newReagent = yield call(createReagent, action.payload)
+    yield put(addReagent(newReagent))
+    yield put(fetchReagentsSuccess([])) // Clear loading
+  } catch (error: any) {
+    yield put(fetchReagentsFailure(error.message || 'Failed to create reagent'))
+  }
+}
+
+// Update Reagent Saga
+function* updateReagentSaga(action: PayloadAction<{ id: string; reagent: any }>) {
+  try {
+    yield put(fetchReagentsStart())
+    const updatedReagent = yield call(updateReagent, action.payload.id, action.payload.reagent)
+    yield put(updateReagentAction(updatedReagent))
+    yield put(fetchReagentsSuccess([])) // Clear loading
+  } catch (error: any) {
+    yield put(fetchReagentsFailure(error.message || 'Failed to update reagent'))
+  }
+}
+
+// Delete Reagent Saga
+function* deleteReagentSaga(action: PayloadAction<string>) {
+  try {
+    yield put(fetchReagentsStart())
+    yield call(deleteReagent, action.payload)
+    yield put(deleteReagentAction(action.payload))
+    yield put(fetchReagentsSuccess([])) // Clear loading
+  } catch (error: any) {
+    yield put(fetchReagentsFailure(error.message || 'Failed to delete reagent'))
+  }
 }
 
 export function* instrumentSaga() {
-    yield takeEvery('instruments/getInstrumentsRequest', getInstrumentsSaga)
-    yield takeLatest('instruments/createInstrumentRequest', createInstrumentSaga)
-    yield takeLatest('instruments/updateInstrumentRequest', updateInstrumentSaga)
-    yield takeLatest('instruments/deleteInstrumentRequest', deleteInstrumentSaga)
+  yield takeEvery('instruments/getInstrumentsRequest', getInstrumentsSaga)
+  yield takeLatest('instruments/createInstrumentRequest', createInstrumentSaga)
+  yield takeLatest('instruments/updateInstrumentRequest', updateInstrumentSaga)
+  yield takeLatest('instruments/deleteInstrumentRequest', deleteInstrumentSaga)
+  yield takeEvery('instruments/getReagentsRequest', getReagentsSaga)
+  yield takeLatest('instruments/createReagentRequest', createReagentSaga)
+  yield takeLatest('instruments/updateReagentRequest', updateReagentSaga)
+  yield takeLatest('instruments/deleteReagentRequest', deleteReagentSaga)
 }

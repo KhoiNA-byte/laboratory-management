@@ -1,117 +1,83 @@
 import { call, put, takeEvery, takeLatest } from 'redux-saga/effects'
 import { PayloadAction } from '@reduxjs/toolkit'
-
-// Mock API functions
-const mockGetPatientsAPI = async () => {
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    return [
-        {
-            id: '1',
-            name: 'John Doe',
-            age: 45,
-            gender: 'Male',
-            phone: '+1234567890',
-            email: 'john.doe@email.com',
-            address: '123 Main St, City',
-            medicalRecord: 'MR001',
-            lastVisit: '2024-01-15',
-            status: 'active'
-        },
-        {
-            id: '2',
-            name: 'Jane Smith',
-            age: 32,
-            gender: 'Female',
-            phone: '+1234567891',
-            email: 'jane.smith@email.com',
-            address: '456 Oak Ave, City',
-            medicalRecord: 'MR002',
-            lastVisit: '2024-01-10',
-            status: 'active'
-        },
-        {
-            id: '3',
-            name: 'Bob Johnson',
-            age: 58,
-            gender: 'Male',
-            phone: '+1234567892',
-            email: 'bob.johnson@email.com',
-            address: '789 Pine Rd, City',
-            medicalRecord: 'MR003',
-            lastVisit: '2024-01-05',
-            status: 'inactive'
-        },
-    ]
-}
-
-const mockCreatePatientAPI = async (patientData: any) => {
-    await new Promise(resolve => setTimeout(resolve, 1200))
-    return {
-        id: Date.now().toString(),
-        ...patientData,
-        medicalRecord: `MR${Date.now()}`,
-        status: 'active',
-        createdAt: new Date().toISOString()
-    }
-}
-
-const mockUpdatePatientAPI = async ({ id, ...patientData }: any) => {
-    await new Promise(resolve => setTimeout(resolve, 900))
-    return {
-        id,
-        ...patientData,
-        updatedAt: new Date().toISOString()
-    }
-}
-
-const mockDeletePatientAPI = async (id: string) => {
-    await new Promise(resolve => setTimeout(resolve, 700))
-    return { success: true, id }
-}
+import {
+  getAllPatients,
+  getPatientById,
+  createPatient,
+  updatePatient,
+  deletePatient,
+} from '../../services/patientApi'
+import {
+  fetchPatientsStart,
+  fetchPatientsSuccess,
+  fetchPatientsFailure,
+  addPatient,
+  updatePatient as updatePatientAction,
+  deletePatient as deletePatientAction,
+} from '../slices/patientSlice'
 
 // Get Patients Saga
 function* getPatientsSaga() {
-    try {
-        const patients = yield call(mockGetPatientsAPI)
-        yield put({ type: 'patients/getPatientsSuccess', payload: patients })
-    } catch (error: any) {
-        yield put({ type: 'patients/getPatientsFailure', payload: error.message })
-    }
+  try {
+    yield put(fetchPatientsStart())
+    const patients = yield call(getAllPatients)
+    yield put(fetchPatientsSuccess(patients))
+  } catch (error: any) {
+    yield put(fetchPatientsFailure(error.message || 'Failed to fetch patients'))
+  }
+}
+
+// Get Patient By ID Saga
+function* getPatientByIdSaga(action: PayloadAction<string>) {
+  try {
+    yield put(fetchPatientsStart())
+    const patient = yield call(getPatientById, action.payload)
+    yield put(fetchPatientsSuccess([patient]))
+  } catch (error: any) {
+    yield put(fetchPatientsFailure(error.message || 'Failed to fetch patient'))
+  }
 }
 
 // Create Patient Saga
 function* createPatientSaga(action: PayloadAction<any>) {
-    try {
-        const newPatient = yield call(mockCreatePatientAPI, action.payload)
-        yield put({ type: 'patients/createPatientSuccess', payload: newPatient })
-    } catch (error: any) {
-        yield put({ type: 'patients/createPatientFailure', payload: error.message })
-    }
+  try {
+    yield put(fetchPatientsStart())
+    const newPatient = yield call(createPatient, action.payload)
+    yield put(addPatient(newPatient))
+    yield put(fetchPatientsSuccess([])) // Clear loading
+  } catch (error: any) {
+    yield put(fetchPatientsFailure(error.message || 'Failed to create patient'))
+  }
 }
 
 // Update Patient Saga
-function* updatePatientSaga(action: PayloadAction<any>) {
-    try {
-        const updatedPatient = yield call(mockUpdatePatientAPI, action.payload)
-        yield put({ type: 'patients/updatePatientSuccess', payload: updatedPatient })
-    } catch (error: any) {
-        yield put({ type: 'patients/updatePatientFailure', payload: error.message })
-    }
+function* updatePatientSaga(action: PayloadAction<{ id: string; patient: any }>) {
+  try {
+    yield put(fetchPatientsStart())
+    const updatedPatient = yield call(updatePatient, action.payload.id, action.payload.patient)
+    yield put(updatePatientAction(updatedPatient))
+    yield put(fetchPatientsSuccess([])) // Clear loading
+  } catch (error: any) {
+    yield put(fetchPatientsFailure(error.message || 'Failed to update patient'))
+  }
 }
 
 // Delete Patient Saga
 function* deletePatientSaga(action: PayloadAction<string>) {
-    try {
-        const result = yield call(mockDeletePatientAPI, action.payload)
-        yield put({ type: 'patients/deletePatientSuccess', payload: result.id })
-    } catch (error: any) {
-        yield put({ type: 'patients/deletePatientFailure', payload: error.message })
-    }
+  try {
+    yield put(fetchPatientsStart())
+    yield call(deletePatient, action.payload)
+    yield put(deletePatientAction(action.payload))
+    yield put(fetchPatientsSuccess([])) // Clear loading
+  } catch (error: any) {
+    yield put(fetchPatientsFailure(error.message || 'Failed to delete patient'))
+  }
 }
 
 export function* patientSaga() {
-    yield takeEvery('patients/getPatientsRequest', getPatientsSaga)
-    yield takeLatest('patients/createPatientRequest', createPatientSaga)
-    yield takeLatest('patients/updatePatientRequest', updatePatientSaga)
-    yield takeLatest('patients/deletePatientRequest', deletePatientSaga)
+  yield takeEvery('patients/getPatientsRequest', getPatientsSaga)
+  yield takeEvery('patients/getPatientByIdRequest', getPatientByIdSaga)
+  yield takeLatest('patients/createPatientRequest', createPatientSaga)
+  yield takeLatest('patients/updatePatientRequest', updatePatientSaga)
+  yield takeLatest('patients/deletePatientRequest', deletePatientSaga)
 }

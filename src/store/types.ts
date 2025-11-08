@@ -15,52 +15,80 @@ export interface User {
 }
 
 export interface Patient {
-  id: string;
-  name: string;
-  age: number;
-  gender: "Male" | "Female";
-  phone: string;
-  address?: string;
-  createdAt: string;
-  updatedAt: string;
+  id?: string;
+  patientMRN: string;
+  patientName: string;
+  patientAge: number;
+  patientGender: string;
+  patientPhone: string;
+  patientEmail: string;
+  patientLastVisit: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface TestOrder {
-  id: string;
-  patientId: string;
-  testName: string;
-  status: "Pending" | "In Progress" | "Completed" | "Cancelled";
-  createdAt: string;
-  updatedAt: string;
+  id?: string;
+  run_id?: string;
+  testType: string;
+  patientId?: string;
+  status?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface TestResult {
-  id: string;
-  orderId: string;
-  testName: string;
-  result: string;
-  flag: "Normal" | "High" | "Low" | "Critical";
-  createdAt: string;
-  updatedAt: string;
+  id?: string;
+  resultId?: string;
+  test_result_rows_id?: string[];
+  test_orderId?: string | null;
+  run_id?: string;
+  instrument_id?: string;
+  performed_by?: string | null;
+  performed_at?: string;
+  status?: string;
+  raw_hl7?: string;
+  parsed_obx?: Record<string, any>;
+  reviewed_by?: string | null;
+  reviewed_at?: string | null;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Instrument {
-  id: string;
+  id?: string;
   name: string;
   model: string;
-  status: "Active" | "Inactive" | "Maintenance";
-  createdAt: string;
-  updatedAt: string;
+  supportedTest?: string[];
+  supportedReagents?: string[];
+  status: string;
+  location?: string;
+  serialNumber?: string;
+  manufacturer?: string;
+  test_result_rowId?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Reagent {
-  id: string;
+  id?: string;
   name: string;
-  lot: string;
-  expiryDate: string;
+  lot_number: string;
+  manufacturer: string;
   quantity: number;
-  createdAt: string;
-  updatedAt: string;
+  unit: string;
+  usage_per_run: number;
+  expiry_date: string;
+  location: string;
+  min_stock: number;
+  max_stock: number;
+  cost: number;
+  typeCbc?: any[];
+  typeCbcs?: string[];
+  instrumentId?: string | null;
+  created_at?: number;
+  updated_at?: number;
 }
 
 export interface FlaggingRule {

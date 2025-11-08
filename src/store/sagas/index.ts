@@ -4,6 +4,7 @@ import { userSaga } from './userSaga'
 import { patientSaga } from './patientSaga'
 import { testOrderSaga } from './testOrderSaga'
 import { instrumentSaga } from './instrumentSaga'
+import { rolesSaga } from './rolesSaga'
 
 export function* rootSaga() {
     yield all([
@@ -12,5 +13,6 @@ export function* rootSaga() {
         fork(patientSaga),
         fork(testOrderSaga),
         fork(instrumentSaga),
+        fork(rolesSaga),
     ])
 }
