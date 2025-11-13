@@ -22,7 +22,7 @@ import InstrumentsPage from "./modules/warehouse/InstrumentsPage";
 import { ReagentsPage } from "./modules/warehouse/ReagentsPage";
 import { WarehousePage } from "./modules/warehouse/WarehousePage";
 import { FlaggingRulesPage } from "./modules/warehouse/FlaggingRulesPage";
-import InstrumentDetailsPage from "./modules/warehouse/InstrumentDetailsPage";
+import InstrumentDetailsPage from "./modules/warehouse/InstrumentDetailPopup";
 import EditInstrumentPage from "./modules/warehouse/EditInstrumentPage";
 import AddInstrumentPage from "./modules/warehouse/AddInstrumentPage";
 
