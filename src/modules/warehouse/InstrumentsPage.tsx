@@ -7,6 +7,8 @@ import { Instrument } from '../../store/types';
 import InstrumentDetailsPopup from './InstrumentDetailPopup';
 import EditInstrumentPopup from './EditInstrumentPage';
 import AddInstrumentPopup from './AddInstrumentPage';
+import SyncInstrumentsPopup from './SyncInstrumentsPopup';
+
 
 const InstrumentsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -21,6 +23,7 @@ const InstrumentsPage: React.FC = () => {
   const [editingInstrument, setEditingInstrument] = useState<Instrument | null>(null);
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
   const [showAddPopup, setShowAddPopup] = useState(false);
+  const [showSyncPopup, setShowSyncPopup] = useState(false);
 
   // 🔹 Fetch data from Redux Saga
   useEffect(() => {
@@ -88,7 +91,7 @@ const InstrumentsPage: React.FC = () => {
   };
 
   const handleSyncUp = () => {
-    dispatch({ type: 'instruments/fetchInstrumentsStart' });
+    setShowSyncPopup(true); 
   };
 
   const handleSaveInstrument = (updatedInstrument: Instrument) => {
@@ -359,6 +362,14 @@ const InstrumentsPage: React.FC = () => {
           onSave={handleSaveNewInstrument}
         />
       )}
+
+        {/* Sync Instruments Popup */}
+        {showSyncPopup && (
+        <SyncInstrumentsPopup
+          onClose={() => setShowSyncPopup(false)}
+        />
+      )}
+
     </div>
   );
 };
