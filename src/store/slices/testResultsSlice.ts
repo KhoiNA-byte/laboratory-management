@@ -1,5 +1,56 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+export type UsedReagentLocal = {
+  id: string | number;
+  name?: string;
+  unit?: string;
+  usage_per_run?: number;
+  amountUsed: number; // editable by user
+};
 
+export type TestOrder = {
+  id: string | number;
+  patient_id?: string | number;
+  patientName?: string;
+  priority?: string;
+  testType?: string;
+  testResultId?: string | number | null;
+  run_id?: string | null;
+  created_at?: string;
+  sex?: string;
+  [k: string]: any;
+};
+
+export type Instrument = {
+  id: string | number;
+  name?: string;
+  status?: string;
+  supportedTest?: string[] | string;
+  supportedReagents?: (string | number)[];
+  [k: string]: any;
+};
+
+export type Reagent = {
+  id: string | number;
+  name?: string;
+  usage_per_run?: number;
+  unit?: string;
+  quantity?: number;
+  typeCbcs?: (string | number)[];
+  [k: string]: any;
+};
+
+export type TestResultRowCreate = {
+  id?: string | number;
+  run_id?: string;
+  test_result_id?: string | number;
+  parameter_id?: string | number;
+  parameter_name?: string;
+  result_value?: number | string;
+  flag?: string;
+  evaluate?: string;
+  deviation?: string;
+  unit?: string;
+};
 /** Comments shape used across app (match CommentsPage) */
 export type CommentItem = {
   id: string;
@@ -54,8 +105,20 @@ export type TestResultDetail = {
   reviewedAt?: string;
   comments?: CommentItem[];
   run_id?: string;
+  // new: raw HL7 payload (string)
+  hl7_raw?: string;
 };
-
+export type CbcParam = {
+  id: string | number;
+  name?: string;
+  abbreviation?: string;
+  value_low_female?: number;
+  value_high_female?: number;
+  value_low_male?: number;
+  value_high_male?: number;
+  unit?: string;
+  [k: string]: any;
+};
 interface RunTestPayload {
   orderId: string | number;
   instrumentId: string | number;
@@ -176,15 +239,18 @@ const slice = createSlice({
 
     // update comments
     updateCommentsRequest(state, action: PayloadAction<UpdateCommentsPayload>) {
-      state.updatingComments = true;
+      // Không bật global loading khi cập nhật comment.
       state.updateCommentsError = null;
     },
-    updateCommentsSuccess(state, action: PayloadAction<{ runId: string; comments: CommentItem[] }>) {
-      state.updatingComments = false;
-      // if current detail matches runId, update it locally too
+    updateCommentsSuccess(
+      state,
+      action: PayloadAction<{ runId: string; comments: CommentItem[] }>
+    ) {
+      // cập nhật local detail nếu phù hợp
       if (state.detail && state.detail.run_id === action.payload.runId) {
         state.detail.comments = action.payload.comments;
       }
+      state.updatingComments = false; // optional: giữ false
     },
     updateCommentsFailure(state, action: PayloadAction<string>) {
       state.updatingComments = false;

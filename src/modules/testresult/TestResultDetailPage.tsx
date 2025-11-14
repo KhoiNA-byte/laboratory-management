@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { XMarkIcon, ArrowDownTrayIcon } from "@heroicons/react/24/outline";
-import Comments, { CommentItem } from "./CommentsPage";
+import Comments from "./CommentsPage";
 import HL7Viewer from "./HL7Viewer";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../store";
@@ -9,8 +9,11 @@ import {
   fetchDetailRequest,
   updateCommentsRequest,
 } from "../../store/slices/testResultsSlice";
+import {
+  CommentItem,
+  TestResultDetail,
+} from "../../store/slices/testResultsSlice";
 
-/* types kept same as yours (ParamRow, OrderData) -- omitted for brevity in this snippet */
 
 export default function TestResultDetailPage(): JSX.Element {
   const { orderNumber } = useParams<{ orderNumber: string }>();
@@ -18,13 +21,13 @@ export default function TestResultDetailPage(): JSX.Element {
   const dispatch = useDispatch<AppDispatch>();
 
   const detail = useSelector((s: RootState) => s.testResults.detail);
-  const loadingDetail = useSelector((s: RootState) => s.testResults.loadingDetail);
-  const updatingComments = useSelector((s: RootState) => s.testResults.updatingComments);
+  const loadingDetail = useSelector(
+    (s: RootState) => s.testResults.loadingDetail
+  );
 
   const [rowsState, setRowsState] = useState<any[]>([]);
   // other local UI states...
   const [isReviewing, setIsReviewing] = useState(false);
-  const originalRowsRef = useRef<any[] | null>(null);
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const [isHL7Open, setIsHL7Open] = useState(false);
   const [reviewedBy, setReviewedBy] = useState<string>("AI Auto Review");
@@ -79,9 +82,16 @@ export default function TestResultDetailPage(): JSX.Element {
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
         <div className="bg-white rounded-lg p-6 max-w-md w-full">
           <h3 className="text-lg font-semibold mb-4">Result not found</h3>
-          <p className="text-sm text-gray-600 mb-6">Cannot find test result for <strong>{orderNumber}</strong></p>
+          <p className="text-sm text-gray-600 mb-6">
+            Cannot find test result for <strong>{orderNumber}</strong>
+          </p>
           <div className="flex justify-end gap-2">
-            <button onClick={() => navigate(-1)} className="px-4 py-2 border rounded-md">Close</button>
+            <button
+              onClick={() => navigate(-1)}
+              className="px-4 py-2 border rounded-md"
+            >
+              Close
+            </button>
           </div>
         </div>
       </div>
@@ -100,24 +110,34 @@ export default function TestResultDetailPage(): JSX.Element {
       <div
         className="fixed inset-0 bg-black/50 z-40"
         aria-hidden="true"
-        onClick={() => { navigate(-1); }}
+        onClick={() => {
+          navigate(-1);
+        }}
       />
 
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[1100px] mx-auto overflow-hidden flex flex-col h-[calc(100vh-4rem)] md:h-auto">
           <div className="px-6 py-4 border-b border-gray-100 flex items-start justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">Complete Blood Count (CBC)</h2>
+              <h2 className="text-lg font-semibold text-gray-900">
+                Complete Blood Count (CBC)
+              </h2>
               <div className="text-sm text-gray-500 mt-1 py-2">
                 Run: {detail?.run_id} • {detail?.patientName}
                 <p className="mx-2 py-1"></p> Sex: {detail?.sex ?? "Unknown"}
               </div>
             </div>
             <div className="block gap-3">
-              <div className="text-sm text-gray-500">Collected: {detail?.collected}</div>
-              <div className="text-sm text-gray-500">Instrument: {detail?.instrument ?? "-"}</div>
+              <div className="text-sm text-gray-500">
+                Collected: {detail?.collected}
+              </div>
+              <div className="text-sm text-gray-500">
+                Instrument: {detail?.instrument ?? "-"}
+              </div>
               <div className="mt-3 inline-flex items-center gap-2">
-                <span className="inline-block bg-red-600 text-white text-sm font-medium px-3 py-1 rounded-full">{detail?.criticalCount ?? 0} Critical Values</span>
+                <span className="inline-block bg-red-600 text-white text-sm font-medium px-3 py-1 rounded-full">
+                  {detail?.criticalCount ?? 0} Critical Values
+                </span>
               </div>
             </div>
           </div>
@@ -141,23 +161,56 @@ export default function TestResultDetailPage(): JSX.Element {
                       </thead>
                       <tbody>
                         {rowsState.map((r, idx) => (
-                          <tr key={idx} className="align-top border-b border-gray-100">
-                            <td className="py-4 pr-6 font-semibold text-gray-700 w-48 truncate">{r.parameter}</td>
+                          <tr
+                            key={idx}
+                            className="align-top border-b border-gray-100"
+                          >
+                            <td className="py-4 pr-6 font-semibold text-gray-700 w-48 truncate">
+                              {r.parameter}
+                            </td>
                             <td className="py-4 pr-6">
-                              <div className={`inline-block px-3 py-1 rounded font-semibold ${r.flag === "High" ? "bg-red-50 text-red-700" : r.flag === "Low" ? "bg-yellow-50 text-yellow-700" : "bg-gray-100 text-gray-700"}`}>
+                              <div
+                                className={`inline-block px-3 py-1 rounded font-semibold ${
+                                  r.flag === "High"
+                                    ? "bg-red-50 text-red-700"
+                                    : r.flag === "Low"
+                                    ? "bg-yellow-50 text-yellow-700"
+                                    : "bg-gray-100 text-gray-700"
+                                }`}
+                              >
                                 {r.result}
                               </div>
                             </td>
-                            <td className="py-4 pr-6 text-sm text-gray-600">{r.unit ?? "-"}</td>
-                            <td className="py-4 pr-6 text-sm text-gray-600">{r.referenceRange ?? "-"}</td>
-                            <td className="py-4 pr-6 text-sm text-gray-600">{r.deviation ?? "-"}</td>
+                            <td className="py-4 pr-6 text-sm text-gray-600">
+                              {r.unit ?? "-"}
+                            </td>
+                            <td className="py-4 pr-6 text-sm text-gray-600">
+                              {r.referenceRange ?? "-"}
+                            </td>
+                            <td className="py-4 pr-6 text-sm text-gray-600">
+                              {r.deviation ?? "-"}
+                            </td>
                             <td className="py-4 pr-6">
                               <div className="flex items-center gap-2">
-                                <span className={`h-3 w-3 rounded-full inline-block ${r.flag === "High" ? "bg-red-500" : r.flag === "Low" ? "bg-amber-500" : r.flag === "Critical" ? "bg-red-700" : "bg-green-500"}`} />
-                                <span className="text-sm text-gray-600">{r.flag ?? "Normal"}</span>
+                                <span
+                                  className={`h-3 w-3 rounded-full inline-block ${
+                                    r.flag === "High"
+                                      ? "bg-red-500"
+                                      : r.flag === "Low"
+                                      ? "bg-amber-500"
+                                      : r.flag === "Critical"
+                                      ? "bg-red-700"
+                                      : "bg-green-500"
+                                  }`}
+                                />
+                                <span className="text-sm text-gray-600">
+                                  {r.flag ?? "Normal"}
+                                </span>
                               </div>
                             </td>
-                            <td className="py-4 pr-6 text-sm text-gray-600">{r.appliedEvaluate ?? "-"}</td>
+                            <td className="py-4 pr-6 text-sm text-gray-600">
+                              {r.appliedEvaluate ?? "-"}
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -169,28 +222,59 @@ export default function TestResultDetailPage(): JSX.Element {
               <div className="w-full md:w-[320px] flex-shrink-0">
                 <div className="space-y-4">
                   <div className="bg-white rounded-lg shadow-md p-4 border">
-                    <h4 className="text-sm font-semibold text-gray-700 mb-3">Summary</h4>
+                    <h4 className="text-sm font-semibold text-gray-700 mb-3">
+                      Summary
+                    </h4>
                     <ul className="text-sm text-gray-600 space-y-2">
-                      <li className="flex justify-between"><span>Total tests</span><strong>{total}</strong></li>
-                      <li className="flex justify-between"><span>Normal</span><strong>{normal}</strong></li>
-                      <li className="flex justify-between"><span>High</span><strong>{high}</strong></li>
-                      <li className="flex justify-between"><span>Low</span><strong>{low}</strong></li>
+                      <li className="flex justify-between">
+                        <span>Total tests</span>
+                        <strong>{total}</strong>
+                      </li>
+                      <li className="flex justify-between">
+                        <span>Normal</span>
+                        <strong>{normal}</strong>
+                      </li>
+                      <li className="flex justify-between">
+                        <span>High</span>
+                        <strong>{high}</strong>
+                      </li>
+                      <li className="flex justify-between">
+                        <span>Low</span>
+                        <strong>{low}</strong>
+                      </li>
                     </ul>
                   </div>
 
                   <div className="bg-white rounded-lg shadow-md p-4 border">
-                    <h4 className="text-sm font-semibold text-gray-700 mb-3">Reviewed</h4>
+                    <h4 className="text-sm font-semibold text-gray-700 mb-3">
+                      Reviewed
+                    </h4>
                     <div className="text-sm text-gray-600">By</div>
-                    <div className="mt-3 text-sm font-medium">{reviewedBy}{reviewedAt ? ` • ${new Date(reviewedAt).toLocaleString()}` : ""}</div>
+                    <div className="mt-3 text-sm font-medium">
+                      {reviewedBy}
+                      {reviewedAt
+                        ? ` • ${new Date(reviewedAt).toLocaleString()}`
+                        : ""}
+                    </div>
                   </div>
 
                   <div className="bg-white rounded-lg shadow-md p-4 border">
-                    <h4 className="text-sm font-semibold text-gray-700 mb-3">Actions</h4>
+                    <h4 className="text-sm font-semibold text-gray-700 mb-3">
+                      Actions
+                    </h4>
                     <div className="space-y-3">
-                      <button type="button" onClick={() => alert("Downloading PDF (placeholder)")} className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 border rounded-lg text-sm text-gray-700 hover:shadow">
+                      <button
+                        type="button"
+                        onClick={() => alert("Downloading PDF (placeholder)")}
+                        className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 border rounded-lg text-sm text-gray-700 hover:shadow"
+                      >
                         <ArrowDownTrayIcon className="h-4 w-4" /> Download PDF
                       </button>
-                      <button type="button" onClick={() => setIsHL7Open(true)} className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 border rounded-lg text-sm text-gray-700 hover:shadow">
+                      <button
+                        type="button"
+                        onClick={() => setIsHL7Open(true)}
+                        className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 border rounded-lg text-sm text-gray-700 hover:shadow"
+                      >
                         View Raw HL7
                       </button>
                     </div>
@@ -204,20 +288,47 @@ export default function TestResultDetailPage(): JSX.Element {
             <div className="text-sm text-gray-700 max-w-[60%]">
               <div className="flex items-center gap-2">
                 <strong>Comment:</strong>
-                {comments.length === 0 ? <span>Empty</span> : <span className="flex-1 truncate whitespace-nowrap overflow-hidden text-ellipsis">{`(${comments[comments.length-1].author}) ${comments[comments.length-1].text}`}</span>}
+                {comments.length === 0 ? (
+                  <span>Empty</span>
+                ) : (
+                  <span className="flex-1 truncate whitespace-nowrap overflow-hidden text-ellipsis">{`(${
+                    comments[comments.length - 1].author
+                  }) ${comments[comments.length - 1].text}`}</span>
+                )}
               </div>
               <div className="mt-2">
-                <button onClick={() => setIsCommentsOpen(true)} className="text-blue-600 underline">More comment</button>
+                <button
+                  onClick={() => setIsCommentsOpen(true)}
+                  className="text-blue-600 underline"
+                >
+                  More comment
+                </button>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
-              <button onClick={() => navigate(-1)} className="px-4 py-2 rounded-lg border text-sm text-gray-700 hover:shadow">Cancel</button>
-              <button onClick={() => { alert("Review/save (mock)"); }} className="px-4 py-2 rounded-lg text-sm bg-blue-600 text-white hover:bg-blue-700">Review</button>
+              <button
+                onClick={() => navigate(-1)}
+                className="px-4 py-2 rounded-lg border text-sm text-gray-700 hover:shadow"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  alert("Review/save (mock)");
+                }}
+                className="px-4 py-2 rounded-lg text-sm bg-blue-600 text-white hover:bg-blue-700"
+              >
+                Review
+              </button>
             </div>
           </div>
 
-          <button onClick={() => navigate(-1)} aria-label="Close" className="absolute top-3 right-3 bg-white rounded-full p-1 shadow hover:bg-gray-50">
+          <button
+            onClick={() => navigate(-1)}
+            aria-label="Close"
+            className="absolute top-3 right-3 bg-white rounded-full p-1 shadow hover:bg-gray-50"
+          >
             <XMarkIcon className="h-5 w-5 text-gray-700" />
           </button>
         </div>
@@ -232,8 +343,12 @@ export default function TestResultDetailPage(): JSX.Element {
         />
       )}
 
-      {isHL7Open && orderNumber && (
-        <HL7Viewer orderNumber={orderNumber} rawHL7={""} onClose={() => setIsHL7Open(false)} />
+      {isHL7Open && detail?.hl7_raw !== undefined && (
+        <HL7Viewer
+          orderNumber={String(detail.run_id ?? orderNumber)}
+          rawHL7={detail.hl7_raw ?? ""}
+          onClose={() => setIsHL7Open(false)}
+        />
       )}
     </div>
   );
