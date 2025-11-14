@@ -53,6 +53,8 @@ import { ReportsPage } from "./modules/audit/ReportsPage";
 
 // Community Module
 import { CommunityPage } from "./modules/community/CommunityPage";
+import UserProfilePage from "./modules/profile/UserProfilePage";
+import ReportsPage1 from "./modules/report/Page";
 
 function App() {
   return (
@@ -392,7 +394,7 @@ function App() {
                 allowedPermissions={[PERMISSIONS.REPORTS_READ]}
                 fallbackPath="/unauthorized"
               >
-                <ReportsPage />
+                <ReportsPage1 />
               </ProtectedRoute>
             }
           />
@@ -415,10 +417,7 @@ function App() {
             path="profile"
             element={
               <ProtectedRoute fallbackPath="/unauthorized">
-                <div className="p-6">
-                  <h1 className="text-2xl font-bold">My Profile</h1>
-                  <p>Profile page coming soon...</p>
-                </div>
+                <UserProfilePage />
               </ProtectedRoute>
             }
           />

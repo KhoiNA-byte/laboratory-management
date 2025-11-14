@@ -110,6 +110,7 @@ export const getUserById = async (id: string): Promise<any> => {
       throw new Error(`Failed to fetch user: ${response.status}`);
     }
     const user = await response.json();
+    console.log("Fetched user data:", user);
     return user;
   } catch (error) {
     console.error("Error fetching user:", error);
