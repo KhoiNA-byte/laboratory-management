@@ -62,8 +62,14 @@ const MyTestResultsPage: React.FC = () => {
     });
   };
 
-  const handleView = (orderNumber: string) => {
-    navigate(`/admin/test-results/${orderNumber}`, {
+  // IMPORTANT: only navigate if we actually have a runId (result ready)
+  const handleView = (orderNumber?: string | number) => {
+    if (!orderNumber) {
+      // defensive: shouldn't happen if button is disabled in UI
+      window.alert("Cannot view: this test is still pending (no result yet).");
+      return;
+    }
+    navigate(`/admin/test-results/${String(orderNumber)}`, {
       state: { background: location },
     });
   };
@@ -140,7 +146,7 @@ const MyTestResultsPage: React.FC = () => {
             </div>
 
             <div className="flex justify-end gap-2">
-              <button
+              {/* <button
                 onClick={() => dispatch(fetchListRequest())}
                 className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center gap-2"
               >
@@ -158,13 +164,13 @@ const MyTestResultsPage: React.FC = () => {
                   />
                 </svg>
                 Sync-Test
-              </button>
+              </button> */}
 
               <button
                 onClick={handleNew}
                 className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center gap-2"
               >
-                New Test
+                + New Test
               </button>
             </div>
           </div>
@@ -242,55 +248,77 @@ const MyTestResultsPage: React.FC = () => {
               </thead>
 
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredRows.map((r) => (
-                  <tr key={`${r.source}-${r.id}`} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-blue-600">
-                        {r.id}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
-                        {r.patientName}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {r.date}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {r.tester}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeColor(
-                          r.status
-                        )}`}
-                      >
-                        {r.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-5">
-                      <button
-                        onClick={() => handleView(r.runId ?? r.id)}
-                        className="px-3 py-1 border border-gray-200 rounded-md text-sm hover:shadow"
-                      >
-                        View
-                      </button>
-                      <button
-                        onClick={() => handleExport(r.id)}
-                        className="px-3 py-1 border border-gray-200 rounded-md text-sm hover:shadow ml-2"
-                      >
-                        Export
-                      </button>
-                      <button
-                        onClick={() => handleDelete(r.runId ?? r.id)}
-                        className="px-3 py-1 border border-red-200 rounded-md text-sm hover:shadow ml-2 text-red-600"
-                      >
-                        {deleting ? "Deleting..." : "Delete"}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {filteredRows.map((r) => {
+                  const viewDisabled = r.status === "In Progress" || !r.runId;
+                  return (
+                    <tr
+                      key={`${r.source}-${r.id}`}
+                      className="hover:bg-gray-50"
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-blue-600">
+                          {r.id !== undefined ? r.id : "Unknown"}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">
+                          {r.patientName}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {r.date}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {r.tester}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span
+                          className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeColor(
+                            r.status
+                          )}`}
+                        >
+                          {r.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-5">
+                        <button
+                          onClick={() =>
+                            viewDisabled
+                              ? window.alert(
+                                  "This test is pending — result not available to view yet."
+                                )
+                              : handleView(r.runId ?? r.id)
+                          }
+                          className={`px-3 py-1 border border-gray-200 rounded-md text-sm ${
+                            viewDisabled
+                              ? "opacity-50 cursor-not-allowed bg-gray-50 text-gray-400"
+                              : "hover:shadow bg-white"
+                          }`}
+                          disabled={viewDisabled}
+                          title={
+                            viewDisabled
+                              ? "Cannot view pending result"
+                              : "View result"
+                          }
+                        >
+                          View
+                        </button>
+                        <button
+                          onClick={() => handleExport(r.id)}
+                          className="px-3 py-1 border border-gray-200 rounded-md text-sm hover:shadow ml-2"
+                        >
+                          Export
+                        </button>
+                        <button
+                          onClick={() => handleDelete(r.runId ?? r.id)}
+                          className="px-3 py-1 border border-red-200 rounded-md text-sm hover:shadow ml-2 text-red-600"
+                        >
+                          {deleting ? "Deleting..." : "Delete"}
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
 
                 {filteredRows.length === 0 && (
                   <tr>

@@ -29,16 +29,23 @@ export type ReagentForm = {
   cost?: number;
 };
 
+export type UpdateReagentPayload = {
+  id: number | string;
+  data: Partial<ReagentServer>;
+};
+
 interface ReagentState {
   list: ReagentServer[];
   loading: boolean;
   error: string | null;
+  updatingId?: number | string | null;
 }
 
 const initialState: ReagentState = {
   list: [],
   loading: false,
   error: null,
+  updatingId: null,
 };
 
 const reagentSlice = createSlice({
@@ -73,6 +80,25 @@ const reagentSlice = createSlice({
       state.error = action.payload;
     },
 
+    // --- Update Reagent ---
+    updateReagentRequest(state, action: PayloadAction<UpdateReagentPayload>) {
+      state.loading = true;
+      state.error = null;
+      state.updatingId = action.payload.id;
+    },
+    updateReagentSuccess(state, action: PayloadAction<ReagentServer>) {
+      state.loading = false;
+      state.updatingId = null;
+      const idx = state.list.findIndex((r) => String(r.id) === String(action.payload.id));
+      if (idx >= 0) state.list[idx] = action.payload;
+      else state.list.unshift(action.payload);
+    },
+    updateReagentFailure(state, action: PayloadAction<string>) {
+      state.loading = false;
+      state.updatingId = null;
+      state.error = action.payload;
+    },
+
     // --- Delete Reagent ---
     deleteReagentRequest(state, action: PayloadAction<number>) {
       state.loading = true;
@@ -96,6 +122,9 @@ export const {
   addReagentRequest,
   addReagentSuccess,
   addReagentFailure,
+  updateReagentRequest,
+  updateReagentSuccess,
+  updateReagentFailure,
   deleteReagentRequest,
   deleteReagentSuccess,
   deleteReagentFailure,

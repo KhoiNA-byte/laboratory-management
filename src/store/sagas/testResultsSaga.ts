@@ -1,3 +1,4 @@
+// src/store/sagas/testResultsSaga.ts
 import { call, put, takeLatest } from "redux-saga/effects";
 import axios from "axios";
 import {
@@ -18,74 +19,10 @@ import {
   deleteResultFailure,
   TestResultRow,
   ListRow,
+  CommentItem,
 } from "../slices/testResultsSlice";
 
 /** Comment type (same as slice) */
-export type CommentItem = {
-  id: string;
-  author: string;
-  authorInitials?: string;
-  role?: string;
-  text: string;
-  createdAt: string;
-};
-
-export type TestOrder = {
-  id: string | number;
-  patient_id?: string | number;
-  patientName?: string;
-  priority?: string;
-  testType?: string;
-  testResultId?: string | number | null;
-  run_id?: string | null;
-  created_at?: string;
-  sex?: string;
-  [k: string]: any;
-};
-
-export type Instrument = {
-  id: string | number;
-  name?: string;
-  status?: string;
-  supportedTest?: string[] | string;
-  supportedReagents?: (string | number)[];
-  [k: string]: any;
-};
-
-export type Reagent = {
-  id: string | number;
-  name?: string;
-  usage_per_run?: number;
-  unit?: string;
-  quantity?: number;
-  typeCbcs?: (string | number)[];
-  [k: string]: any;
-};
-
-export type CbcParam = {
-  id: string | number;
-  name?: string;
-  abbreviation?: string;
-  value_low_female?: number;
-  value_high_female?: number;
-  value_low_male?: number;
-  value_high_male?: number;
-  unit?: string;
-  [k: string]: any;
-};
-
-export type TestResultRowCreate = {
-  id?: string | number;
-  run_id?: string;
-  test_result_id?: string | number;
-  parameter_id?: string | number;
-  parameter_name?: string;
-  result_value?: number | string;
-  flag?: string;
-  evaluate?: string;
-  deviation?: string;
-  unit?: string;
-};
 
 const API_BASE = "https://69085724b49bea95fbf32f71.mockapi.io";
 const sid = (v: any) => (v === null || v === undefined ? "" : String(v));
@@ -97,7 +34,7 @@ function randBetween(a: number, b: number) {
 function generateRunId() {
   try {
     // @ts-ignore
-    if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    if (typeof crypto !== "Unknown" && "randomUUID" in crypto) {
       // @ts-ignore
       return String(crypto.randomUUID());
     }
@@ -105,21 +42,55 @@ function generateRunId() {
   return `run-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-/** simple evaluation (placeholder) */
-function evaluateParameterSimple(value: number) {
-  if (value > 9000)
-    return {
-      flag: "High",
-      evaluate: "High",
-      deviation: `${Math.round(((value - 9000) / 9000) * 100)}%`,
-    };
-  if (value < 1)
-    return {
-      flag: "Low",
-      evaluate: "Low",
-      deviation: `${Math.round(((1 - value) / 1) * 100)}%`,
-    };
-  return { flag: "Normal", evaluate: "Normal", deviation: "0%" };
+/** helper to build HL7 text from result payload */
+function buildHL7(
+  runId: string,
+  order: any,
+  instrumentName: string,
+  rows: any[],
+  patientDob?: string
+) {
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const ts = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(
+    now.getDate()
+  )}${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+
+  const patientName = order?.patientName ?? order?.patient_name ?? "Unknown";
+  const pidId =
+    order?.patient_id ?? order?.id ?? `P${Date.now().toString().slice(-6)}`;
+  const nameParts = String(patientName).split(" ");
+  const family = nameParts.length > 0 ? nameParts[0] : patientName;
+  const given = nameParts.length > 1 ? nameParts.slice(1).join("^") : "";
+
+  const msh = `MSH|^~\\&|LIS|LAB|HIS|HOSPITAL|${ts}||ORU^R01|${runId}|P|2.5`;
+  const pid = `PID|1||${pidId}^^^Hospital^MR||${
+    given ? `${given}^${family}` : patientName
+  }||${patientDob ?? ""}|${order?.sex?.charAt(0) ?? "U"}|||${
+    order?.address ?? ""
+  }`;
+  const obr = `OBR|1|ORD${runId.slice(0, 8)}|RES${runId.slice(
+    0,
+    8
+  )}|CBC^Complete Blood Count^L||${ts}|||||${order?.requester ?? ""}`;
+
+  const obxLines = rows.map((r: any, idx: number) => {
+    const seq = idx + 1;
+    const code = `${r.parameter}^${r.parameter}^L`;
+    const val = String(r.result);
+    const unit = r.unit ?? "";
+    const ref = (r.referenceRange || "").replace(/,/g, "");
+    const flagMap: any = { High: "H", Low: "L", Normal: "N", Critical: "C" };
+    const singleFlag = flagMap[r.flag] ?? (r.flag ? r.flag.charAt(0) : "");
+    const deviation = r.deviation ?? "";
+    const applied = r.appliedEvaluate ?? "";
+    return `OBX|${seq}|NM|${code}||${val}|${unit}|${ref}|${singleFlag}|${deviation}|F||${applied}`;
+  });
+
+  const nte = `NTE|1||Some parameters flagged high/low — please review applied rules.`;
+
+  const parts = [msh, pid, obr, ...obxLines, nte];
+  return parts.join("\n");
 }
 
 /** --------------- fetchListSaga --------------- */
@@ -147,7 +118,7 @@ function* fetchListSaga(): Generator<any, void, any> {
           tester: "Admin",
           status: "In Progress",
           source: "order",
-          runId: undefined,
+          runId: "",
         };
         return row;
       });
@@ -165,13 +136,13 @@ function* fetchListSaga(): Generator<any, void, any> {
         (matchedOrder ? matchedOrder.created_at : "");
       const date = dateRaw ? new Date(dateRaw).toLocaleString() : "";
       const row: ListRow = {
-        id: matchedOrder ? String(matchedOrder.id) : `R-${String(r.id)}`,
+        id: matchedOrder ? String(matchedOrder.id) : "",
         patientName: matchedOrder?.patientName ?? r.patientName ?? "Unknown",
         date,
         tester: "Admin",
         status: "Completed",
         source: "result",
-        runId: r.run_id ? String(r.run_id) : undefined,
+        runId: r.run_id ? String(r.run_id) : "",
       };
       return row;
     });
@@ -189,10 +160,6 @@ function* fetchListSaga(): Generator<any, void, any> {
 }
 
 /** --------------- runTestSaga --------------- */
-/**
- * create test_result (rich object), create rows, patch order.run_id, patch reagents quantities (best-effort)
- */
-// --- replace runTestSaga with this implementation ---
 function* runTestSaga(
   action: ReturnType<typeof runTestRequest>
 ): Generator<any, void, any> {
@@ -224,14 +191,13 @@ function* runTestSaga(
   const formatResult = (key: string, v: number) => {
     const k = String(key).toLowerCase();
     if (k.includes("wbc") || k.includes("plt")) {
-      // integer with thousand separator
       return Math.round(v).toLocaleString();
     }
     if (k.includes("rbc")) {
-      return (Math.round(v * 100) / 100).toFixed(2); // 2 decimals
+      return (Math.round(v * 100) / 100).toFixed(2);
     }
     if (k.includes("hgb")) {
-      return (Math.round(v * 10) / 10).toFixed(1); // 1 decimal
+      return (Math.round(v * 10) / 10).toFixed(1);
     }
     if (k.includes("hct")) {
       return Math.round(v).toString();
@@ -241,51 +207,6 @@ function* runTestSaga(
     }
     return String(v);
   };
-
-  // helper: compute deviation percent relative to nearest bound (high for above, low for below)
-  const computeDeviation = (value: number, low: number, high: number) => {
-    if (value >= low && value <= high) return "0%";
-    if (value > high) {
-      const pct = Math.round(((value - high) / high) * 100);
-      return `${pct >= 0 ? "+" : ""}${pct}%`;
-    } else {
-      // below
-      const pct = Math.round(((value - low) / low) * 100);
-      return `${pct <= 0 ? "" : "-"}${Math.abs(pct)}%`;
-    }
-  };
-
-  // list of parameters we always produce (matching your example)
-  const PARAM_TEMPLATE: {
-    key: string; // used to decide formatting
-    parameter: string;
-    unit: string;
-    referenceRange: string;
-  }[] = [
-    {
-      key: "WBC",
-      parameter: "WBC",
-      unit: "cells/µL",
-      referenceRange: "4,000–10,000",
-    },
-    { key: "HGB", parameter: "HGB", unit: "g/dL", referenceRange: "14–18" },
-    { key: "HCT", parameter: "HCT", unit: "%", referenceRange: "42–52" },
-    {
-      key: "PLT",
-      parameter: "PLT",
-      unit: "cells/µL",
-      referenceRange: "150,000–350,000",
-    },
-    { key: "MCV", parameter: "MCV", unit: "fL", referenceRange: "80–100" },
-    {
-      key: "RBC",
-      parameter: "RBC",
-      unit: "million/µL",
-      referenceRange: "4.2–5.4",
-    },
-    { key: "MCH", parameter: "MCH", unit: "pg", referenceRange: "27–33" },
-    { key: "MCHC", parameter: "MCHC", unit: "g/dL", referenceRange: "32–36" },
-  ];
 
   try {
     // 1) fetch order
@@ -305,14 +226,39 @@ function* runTestSaga(
     );
     const inst = instRes?.data ?? {};
 
-    // 3) fetch reagents pool (best-effort)
-    let allReagents: any[] = [];
-    try {
-      const a = yield call(axios.get, `${API_BASE}/reagents`);
-      allReagents = a?.data ?? [];
-    } catch {}
+    // 3) build rows ALWAYS using fixed template
+    const PARAM_TEMPLATE: {
+      key: string;
+      parameter: string;
+      unit: string;
+      referenceRange: string;
+    }[] = [
+      {
+        key: "WBC",
+        parameter: "WBC",
+        unit: "cells/µL",
+        referenceRange: "4,000–10,000",
+      },
+      { key: "HGB", parameter: "HGB", unit: "g/dL", referenceRange: "14–18" },
+      { key: "HCT", parameter: "HCT", unit: "%", referenceRange: "42–52" },
+      {
+        key: "PLT",
+        parameter: "PLT",
+        unit: "cells/µL",
+        referenceRange: "150,000–350,000",
+      },
+      { key: "MCV", parameter: "MCV", unit: "fL", referenceRange: "80–100" },
+      {
+        key: "RBC",
+        parameter: "RBC",
+        unit: "million/µL",
+        referenceRange: "4.2–5.4",
+      },
+      { key: "MCH", parameter: "MCH", unit: "pg", referenceRange: "27–33" },
+      { key: "MCHC", parameter: "MCHC", unit: "g/dL", referenceRange: "32–36" },
+    ];
 
-    // 4) build rows ALWAYS using PARAM_TEMPLATE
+    // generate rows
     const rowsForResult: any[] = [];
     for (const tpl of PARAM_TEMPLATE) {
       const rng = parseRange(tpl.referenceRange);
@@ -320,31 +266,24 @@ function* runTestSaga(
       if (rng) {
         const low = rng.low;
         const high = rng.high;
-        // with 75% probability pick inside range, else outside (below or above)
         const p = Math.random();
         if (p < 0.75) {
           value = randBetweenLocal(low, high);
         } else if (p < 0.875) {
-          // below: pick between low*0.6 and low - small
-          const belowMax = Math.max(0, low - (high - low) * 0.05);
           value = randBetweenLocal(
             Math.max(0, low * 0.5),
-            Math.max(belowMax, Math.max(0, low - 0.1 * low))
+            Math.max(0, low - (high - low) * 0.05)
           );
         } else {
-          // above: pick between high + small and high*1.5
           value = randBetweenLocal(
             high + Math.max(1, (high - low) * 0.01),
             high * 1.5
           );
         }
       } else {
-        // no range -> fallback to small random
         value = Math.round(randBetweenLocal(1, 100) * 10) / 10;
       }
 
-      // rounding/formatting: also convert units where reference contains thousands separators
-      // compute flag & deviation
       let flag = "Normal";
       let deviation = "0%";
       if (rng) {
@@ -352,7 +291,6 @@ function* runTestSaga(
         const high = rng.high;
         if (value < low) {
           flag = "Low";
-          // deviation relative to low
           const pct = Math.round(((low - value) / (low || 1)) * 100);
           deviation = `-${pct}%`;
         } else if (value > high) {
@@ -363,22 +301,15 @@ function* runTestSaga(
           flag = "Normal";
           deviation = "0%";
         }
-      } else {
-        flag = "Normal";
-        deviation = "0%";
       }
 
-      // applyEvaluate: if abnormal choose variant, else "-"
       let appliedEvaluate = "-";
-      if (flag === "High") {
+      if (flag === "High")
         appliedEvaluate = Math.random() < 0.5 ? "High-v1" : "High-v2";
-      } else if (flag === "Low") {
-        appliedEvaluate = "Low-v1";
-      }
+      if (flag === "Low") appliedEvaluate = "Low-v1";
 
       const formatted = formatResult(tpl.key, value);
 
-      // push final row object (stringified result)
       rowsForResult.push({
         parameter: tpl.parameter,
         result: formatted,
@@ -390,26 +321,35 @@ function* runTestSaga(
       });
     }
 
-    // 5) create runId and test_result object that includes rows array (exact shape you requested)
+    // 4) create runId and test_result payload including hl7_raw
     const runId = generateRunId();
     const performedAt = new Date().toISOString();
+    const hl7Raw = buildHL7(
+      runId,
+      order,
+      inst?.name ?? sid(instrumentId),
+      rowsForResult,
+      order?.dob
+    );
+
     const testResultPayload: any = {
       run_id: runId,
       instrument: inst?.name ?? sid(instrumentId),
       performed_at: performedAt,
       status: "Completed",
       patientName: order?.patientName ?? order?.patient_name ?? "Unknown",
-      sex: sex ?? order?.sex ?? undefined,
+      sex: sex ?? order?.sex ?? "Unknown",
       collected: performedAt,
       criticalCount: rowsForResult.filter(
         (r) => r.flag === "High" || r.flag === "Low" || r.flag === "Critical"
       ).length,
       rows: rowsForResult,
-      comments: [], // initially empty
+      comments: [], // keep test_results.comments empty (we use separate /comments)
       notes: `Auto-generated (mock) for order ${sid(orderId)}`,
+      hl7_raw: hl7Raw,
     };
 
-    // POST test_result with full object
+    // 5) POST test_result
     let trResData: any = null;
     try {
       const trRes = yield call(
@@ -424,7 +364,6 @@ function* runTestSaga(
 
     let testResultId = trResData?.id ?? null;
     if (!testResultId) {
-      // try search by run_id
       try {
         const find = yield call(
           axios.get,
@@ -438,7 +377,7 @@ function* runTestSaga(
       testResultId = `local-${Date.now()}`;
     }
 
-    // 6) Optionally create /test_result_rows entries for compatibility (best-effort)
+    // 6) create minimal test_result_rows for compatibility (best-effort)
     for (const r of rowsForResult) {
       const rowPayload: any = {
         run_id: runId,
@@ -452,12 +391,10 @@ function* runTestSaga(
       };
       try {
         yield call(axios.post, `${API_BASE}/test_result_rows`, rowPayload);
-      } catch {
-        // ignore failure
-      }
+      } catch {}
     }
 
-    // 7) patch test_order.run_id
+    // 7) patch test_orders.run_id
     try {
       yield call(axios.patch, `${API_BASE}/test_order/${sid(orderId)}`, {
         run_id: runId,
@@ -471,13 +408,10 @@ function* runTestSaga(
       } catch {}
     }
 
-    // 8) patch reagents quantities based on usedReagents or instrument default (best-effort)
-    // resolve instrument.supportedReagents -> reduce reagent.quantity by amountUsed if provided or usage_per_run
+    // 8) patch reagents quantities (best-effort)
     try {
-      const instFull = inst; // already fetched
-      const reagentRefs: any[] = instFull?.supportedReagents ?? [];
+      const reagentRefs: any[] = inst?.supportedReagents ?? [];
       for (const rid of reagentRefs) {
-        // find reagent entry
         try {
           const rcur = yield call(
             axios.get,
@@ -485,7 +419,6 @@ function* runTestSaga(
           );
           const cur = rcur?.data ?? null;
           if (!cur) continue;
-          // find user provided amount if any
           let amountToUse = 0;
           if (Array.isArray(usedReagents) && usedReagents.length > 0) {
             const u = usedReagents.find(
@@ -495,7 +428,6 @@ function* runTestSaga(
             );
             if (u) amountToUse = Number(u.amountUsed || 0);
           }
-          // fallback to reagent.usage_per_run
           if (!amountToUse) amountToUse = Number(cur.usage_per_run ?? 0);
           const newQty = Math.max(0, Number(cur.quantity ?? 0) - amountToUse);
           yield call(axios.patch, `${API_BASE}/reagents/${sid(cur.id)}`, {
@@ -509,7 +441,20 @@ function* runTestSaga(
       // ignore
     }
 
-    // 9) put result into redux store (rows converted to TestResultRow shape)
+    // 8.5) Best-effort: create an initial comments thread in /comments (so Comments modal can find it)
+    try {
+      const commentsPayload = {
+        run_id: runId,
+        comments: [],
+        createdAt: new Date().toISOString(),
+        createdBy: "system:auto",
+      };
+      yield call(axios.post, `${API_BASE}/comments`, commentsPayload);
+    } catch {
+      // ignore errors from comments creation
+    }
+
+    // 9) success -> put into redux
     const rowsToReturn: TestResultRow[] = rowsForResult.map((r: any) => ({
       run_id: runId,
       test_result_id: testResultId,
@@ -531,7 +476,7 @@ function* runTestSaga(
 /** --------------- updateCommentsSaga --------------- */
 /**
  * Payload: { runId, comments[] }
- * - Find test_result by run_id, patch comments field (overwrite)
+ * - Upsert into /comments by run_id (GET ?run_id=..., PATCH if found, POST if not)
  */
 function* updateCommentsSaga(
   action: ReturnType<typeof updateCommentsRequest>
@@ -540,55 +485,68 @@ function* updateCommentsSaga(
     runId: string;
     comments: CommentItem[];
   };
+
   try {
-    // try find test_result by run_id
-    let targetId: string | number | null = null;
+    // try find thread by run_id
+    let threadId: string | number | null = null;
     try {
       const found = yield call(
         axios.get,
-        `${API_BASE}/test_results?run_id=${encodeURIComponent(runId)}`
+        `${API_BASE}/comments?run_id=${encodeURIComponent(runId)}`
       );
       const arr = found?.data ?? [];
-      if (arr.length > 0) targetId = arr[0].id ?? null;
-    } catch {}
-
-    // if not found by run_id, maybe runId is actual id
-    if (!targetId) targetId = runId;
-
-    if (!targetId)
-      throw new Error("Cannot determine test_result id to update comments");
-
-    // patch test_result with new comments array (overwrite)
-    try {
-      yield call(axios.patch, `${API_BASE}/test_results/${sid(targetId)}`, {
-        comments,
-      });
+      if (arr.length > 0) threadId = arr[0].id ?? null;
     } catch {
-      // fallback put
+      // ignore lookup errors for now
+    }
+
+    if (threadId) {
+      // try patch
       try {
-        const existing =
-          (yield call(axios.get, `${API_BASE}/test_results/${sid(targetId)}`))
-            ?.data ?? {};
-        yield call(axios.put, `${API_BASE}/test_results/${sid(targetId)}`, {
-          ...(existing ?? {}),
+        yield call(axios.patch, `${API_BASE}/comments/${sid(threadId)}`, {
           comments,
+          updatedAt: new Date().toISOString(),
         });
-      } catch {
-        // if all fails, throw to enter catch below
-        throw new Error("Failed to persist comments");
+      } catch (err) {
+        // fallback to PUT
+        try {
+          const existing =
+            (yield call(axios.get, `${API_BASE}/comments/${sid(threadId)}`))
+              ?.data ?? {};
+          yield call(axios.put, `${API_BASE}/comments/${sid(threadId)}`, {
+            ...existing,
+            comments,
+            updatedAt: new Date().toISOString(),
+          });
+        } catch (err2) {
+          throw new Error("Failed to persist comments to comments table");
+        }
+      }
+    } else {
+      // create new thread
+      try {
+        yield call(axios.post, `${API_BASE}/comments`, {
+          run_id: runId,
+          comments,
+          createdAt: new Date().toISOString(),
+          createdBy:
+            (comments?.length > 0 && comments[comments.length - 1]?.author) ??
+            "unknown",
+        });
+      } catch (err) {
+        throw new Error("Failed to create comments thread");
       }
     }
 
-    // success
     yield put(updateCommentsSuccess({ runId, comments }));
     // refresh detail so UI consistent
-    yield put({ type: fetchDetailRequest.type, payload: runId } as any);
+    yield put({ type: fetchDetailRequest.type, payload: runId });
   } catch (err: any) {
     yield put(updateCommentsFailure(err?.message ?? "Update comments failed"));
   }
 }
 
-/** --------------- other sagas (delete/fetchDetail) remain similar to prior implementation --------------- */
+/** --------------- delete/fetchDetail sagas --------------- */
 function* deleteResultSaga(
   action: ReturnType<typeof deleteResultRequest>
 ): Generator<any, void, any> {
@@ -624,6 +582,20 @@ function* deleteResultSaga(
       }
     } catch {}
 
+    // also delete comments thread if exists (best-effort)
+    try {
+      const cfound = yield call(
+        axios.get,
+        `${API_BASE}/comments?run_id=${encodeURIComponent(sid(id))}`
+      );
+      const carr = cfound?.data ?? [];
+      for (const t of carr) {
+        try {
+          yield call(axios.delete, `${API_BASE}/comments/${sid(t.id)}`);
+        } catch {}
+      }
+    } catch {}
+
     yield put(deleteResultSuccess());
     yield put({ type: fetchListRequest.type });
   } catch (err: any) {
@@ -636,7 +608,6 @@ function* fetchDetailSaga(
 ): Generator<any, void, any> {
   const orderNumber = action.payload;
   try {
-    // try fetch test_result by id or run_id
     let testResult: any = null;
     try {
       const byId = yield call(
@@ -657,7 +628,6 @@ function* fetchDetailSaga(
       } catch {}
     }
 
-    // fallback: try treat as test_order id then find its run_id
     let order: any = null;
     if (!testResult) {
       try {
@@ -679,11 +649,11 @@ function* fetchDetailSaga(
       } catch {}
     }
 
-    // if (!testResult) throw new Error("Result not found");
+    if (!testResult) throw new Error("Result not found");
 
     const runId = testResult.run_id ?? testResult.id;
 
-    // prefer rows stored inside test_result (rows array) else query test_result_rows
+    // prefer rows stored inside test_result (else query rows table)
     let rows: any[] = [];
     if (Array.isArray(testResult.rows) && testResult.rows.length > 0) {
       rows = testResult.rows;
@@ -699,7 +669,6 @@ function* fetchDetailSaga(
       } catch {}
     }
 
-    // map to UI row format
     const mapped = (rows || []).map((r: any) => ({
       parameter: r.parameter_name ?? r.parameter ?? r.parameter_id ?? "",
       result: String(r.result_value ?? r.result ?? r.value ?? ""),
@@ -710,26 +679,47 @@ function* fetchDetailSaga(
       appliedEvaluate: r.appliedEvaluate ?? r.evaluate ?? "",
     }));
 
+    // try to read external comments thread (preferred)
+    let externalComments: any[] = [];
+    try {
+      const cc = yield call(
+        axios.get,
+        `${API_BASE}/comments?run_id=${encodeURIComponent(String(runId))}`
+      );
+      const carr = cc?.data ?? [];
+      if (carr.length > 0) {
+        externalComments = carr[0].comments ?? [];
+      }
+    } catch {
+      // ignore
+    }
+
     const detail = {
       patientName:
         testResult.patientName ?? testResult.patient_name ?? "Unknown",
-      sex: testResult.sex ?? undefined,
+      sex: testResult.sex ?? "Unknown",
       collected:
         testResult.collected ??
         testResult.performed_at ??
         testResult.created_at ??
-        undefined,
-      instrument: testResult.instrument ?? undefined,
+        "Unknown",
+      instrument: testResult.instrument ?? "Unknown",
       criticalCount:
         testResult.criticalCount ??
         mapped.filter(
           (m) => m.flag === "High" || m.flag === "Low" || m.flag === "Critical"
         ).length,
       rows: mapped,
-      reviewedBy: testResult.reviewedBy ?? testResult.reviewed_by ?? undefined,
-      reviewedAt: testResult.reviewedAt ?? testResult.reviewed_at ?? undefined,
-      comments: Array.isArray(testResult.comments) ? testResult.comments : [],
+      reviewedBy: testResult.reviewedBy ?? testResult.reviewed_by ?? "Unknown",
+      reviewedAt: testResult.reviewedAt ?? testResult.reviewed_at ?? "Unknown",
+      comments:
+        externalComments.length > 0
+          ? externalComments
+          : Array.isArray(testResult.comments)
+          ? testResult.comments
+          : [],
       run_id: String(runId),
+      hl7_raw: testResult.hl7_raw ?? testResult.raw_hl7 ?? "",
     };
 
     yield put(fetchDetailSuccess(detail));

@@ -7,6 +7,7 @@ import {
   ReagentServer,
 } from "../../store/slices/reagentSlice";
 import AddReagent from "./AddReagent";
+import ReagentDetailModal from "./ReagentDetailModal"; // <-- new
 
 const prettyDate = (iso?: string) => {
   if (!iso) return "-";
@@ -41,6 +42,10 @@ const WarehousePage: React.FC = () => {
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState("All Items");
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null); // dropdown hiện tại
+  const [selectedReagent, setSelectedReagent] = useState<ReagentServer | null>(
+    null
+  );
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   const filterTabs = [
     "All Items",
@@ -73,7 +78,8 @@ const WarehousePage: React.FC = () => {
   };
 
   const handleView = (r: ReagentServer) => {
-    alert(`View detail of ${r.name}\nLot: ${r.lot_number}\nQty: ${r.quantity}`);
+    setSelectedReagent(r);
+    setIsDetailOpen(true);
   };
 
   const toggleDropdown = (id: number) => {
@@ -266,7 +272,16 @@ const WarehousePage: React.FC = () => {
           )}
         </div>
       </div>
-
+      <ReagentDetailModal
+        isOpen={isDetailOpen}
+        reagent={selectedReagent}
+        onClose={() => {
+          setIsDetailOpen(false);
+          setSelectedReagent(null);
+          // reload list to ensure up-to-date (optional, saga also refreshes)
+          dispatch(fetchReagentsRequest());
+        }}
+      />
       <AddReagent isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} />
     </div>
   );

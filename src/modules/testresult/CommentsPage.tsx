@@ -1,50 +1,27 @@
 // src/modules/testorder/CommentsPage.tsx
 import React, { useEffect, useState } from "react";
 import { XMarkIcon, ArrowLeftIcon } from "@heroicons/react/24/outline";
-
-export type CommentItem = {
-  id: string;
-  author: string;
-  authorInitials?: string;
-  role?: string;
-  text: string;
-  createdAt: string; // ISO
-};
+import { CommentItem } from "../../store/slices/testResultsSlice";
 
 const structuredCloneSafe = <T,>(v: T): T => JSON.parse(JSON.stringify(v));
 
-function getCurrentUserName(): string {
-  try {
-    const keys = ["currentUser", "user", "authUser", "userInfo", "auth"];
-    for (const k of keys) {
-      const raw = localStorage.getItem(k);
-      if (!raw) continue;
-      try {
-        const obj = JSON.parse(raw);
-        if (!obj) continue;
-        if (typeof obj === "string" && obj.trim()) return obj;
-        if (obj.name) return obj.name;
-        if (obj.fullName) return obj.fullName;
-        if (obj.username) return obj.username;
-        if (obj.displayName) return obj.displayName;
-      } catch {
-        if (raw.trim()) return raw;
-      }
-    }
-  } catch {}
-  return "Admin User";
-}
-
+/**
+ * Comments component
+ * - Không dùng localStorage nữa.
+ * - Nếu muốn dùng tên user thực, truyền prop `currentUserName` từ parent (ví dụ lấy từ redux).
+ */
 export default function Comments({
   orderNumber,
   initialComments,
   onClose,
   onChangeComments,
+  currentUserName,
 }: {
   orderNumber: string;
   initialComments: CommentItem[] | undefined;
   onClose: () => void;
   onChangeComments: (comments: CommentItem[]) => void;
+  currentUserName?: string; // <-- optional, nếu không truyền sẽ dùng "Admin User"
 }) {
   const [comments, setComments] = useState<CommentItem[]>(
     structuredCloneSafe(initialComments ?? [])
@@ -103,13 +80,21 @@ export default function Comments({
   };
 
   const genId = () => `c${Date.now()}${Math.floor(Math.random() * 1000)}`;
+
+  // LẤY TÊN NGƯỜI DÙNG: ưu tiên prop currentUserName, fallback "Admin User"
+  const getCurrentUserNameSafe = () => {
+    if (typeof currentUserName === "string" && currentUserName.trim())
+      return currentUserName;
+    return "Admin User";
+  };
+
   const addComment = () => {
     const text = newCommentText.trim();
     if (!text) return;
-    const author = getCurrentUserName();
+    const author = getCurrentUserNameSafe();
     const initials = author
       .split(" ")
-      .map((s) => s[0])
+      .map((s) => s[0] || "")
       .slice(0, 2)
       .join("")
       .toUpperCase();
@@ -189,7 +174,7 @@ export default function Comments({
                         {c.authorInitials ??
                           c.author
                             .split(" ")
-                            .map((s) => s[0])
+                            .map((s) => s[0] || "")
                             .slice(0, 2)
                             .join("")
                             .toUpperCase()}

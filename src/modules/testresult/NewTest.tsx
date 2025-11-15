@@ -3,24 +3,17 @@ import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../store";
-import { runTestRequest } from "../../store/slices/testResultsSlice";
+import { runTestRequest,UsedReagentLocal } from "../../store/slices/testResultsSlice";
 import {
   Instrument,
   TestOrder,
   Reagent,
   CbcParam,
   TestResultRowCreate,
-} from "../../store/sagas/testResultsSaga";
+} from "../../store/slices/testResultsSlice";
 
 const API_BASE = "https://69085724b49bea95fbf32f71.mockapi.io";
 
-type UsedReagentLocal = {
-  id: string | number;
-  name?: string;
-  unit?: string;
-  usage_per_run?: number;
-  amountUsed: number; // editable by user
-};
 
 export default function NewTest({
   isOpen,
