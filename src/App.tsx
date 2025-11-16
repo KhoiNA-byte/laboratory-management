@@ -1,4 +1,3 @@
-
 // src/App.tsx
 import React from "react";
 import {
@@ -29,7 +28,7 @@ import { UnauthorizedPage } from "./modules/iam/UnauthorizedPage";
 
 // Warehouse Module
 import InstrumentsPage from "./modules/warehouse/InstrumentsPage";
-import  WarehousePage from "./modules/warehouse/WarehousePage";
+import WarehousePage from "./modules/warehouse/WarehousePage";
 import { FlaggingRulesPage } from "./modules/warehouse/FlaggingRulesPage";
 import InstrumentDetailsPage from "./modules/warehouse/InstrumentDetailPopup";
 import EditInstrumentPage from "./modules/warehouse/EditInstrumentPage";
@@ -37,14 +36,12 @@ import AddInstrumentPage from "./modules/warehouse/AddInstrumentPage";
 
 // Test Order Module
 import { TestOrdersPage } from "./modules/testorder/TestOrdersPage";
-
 import TestResultDetailPage from "./modules/testresult/TestResultDetailPage";
 import MyTestResultsPage from "./modules/testresult/MyTestResultsPage";
 import TestOrderDetailsPage from "./modules/testorder/TestOrderDetailsPage";
 import UpdateTestOrderPage from "./modules/testorder/UpdateTestOrderPage";
 import NewTestOrderPage from "./modules/testorder/NewTestOrderPage";
 import CommentsPage from "./modules/testresult/CommentsPage";
-
 
 // Monitoring Module
 import { MonitoringPage } from "./modules/monitoring/MonitoringPage";
@@ -64,10 +61,13 @@ import { ReportsPage } from "./modules/audit/ReportsPage";
 // Community Module
 import { CommunityPage } from "./modules/community/CommunityPage";
 
-function App() {
+function AppRoutesInner() {
+  const location = useLocation();
+  const background = location.state && location.state.background;
+
   return (
-    <Router>
-      <Routes>
+    <>
+      <Routes location={background || location}>
         {/* Public Routes */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/verify-otp" element={<VerifyOTPPage />} />
@@ -211,17 +211,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="reagents"
-            element={
-              <ProtectedRoute
-                allowedPermissions={[PERMISSIONS.WAREHOUSE_READ]}
-                fallbackPath="/unauthorized"
-              >
-                <ReagentsPage />
-              </ProtectedRoute>
-            }
-          />
+          
           <Route
             path="flagging-rules"
             element={
@@ -233,7 +223,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
 
           {/* Test Order Routes */}
           <Route
@@ -280,17 +269,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="test-results"
-            element={
-              <ProtectedRoute
-                allowedPermissions={[PERMISSIONS.TEST_ORDERS_READ]}
-                fallbackPath="/unauthorized"
-              >
-                <TestResultPage />
-              </ProtectedRoute>
-            }
-          />
+          
           <Route
             path="my-test-results"
             element={
@@ -347,26 +326,6 @@ function App() {
                 <InstrumentLogsPage />
               </ProtectedRoute>
             }
-          <Route path="warehouse" element={<WarehousePage />} />
-          <Route path="flagging-rules" element={<FlaggingRulesPage />} />
-
-          {/* Test Orders */}
-          <Route path="test-orders" element={<TestOrdersPage />} />
-          <Route path="test-orders/new" element={<NewTestOrderPage />} />
-          <Route
-            path="test-orders/:orderId/edit"
-            element={<UpdateTestOrderPage />}
-          />
-          <Route
-            path="test-orders/:orderId"
-            element={<TestOrderDetailsPage />}
-          />
-
-          {/* Test Results routes (detail route under /admin) */}
-          <Route path="test-results" element={<MyTestResultsPage />} />
-          <Route
-            path="test-results/:orderNumber"
-            element={<TestResultDetailPage />}
           />
 
           {/* Patient Routes */}
@@ -440,38 +399,22 @@ function App() {
               </ProtectedRoute>
             }
           />
-
-
-          {/* Audit */}
-          <Route path="audit-logs" element={<AuditLogsPage />} />
-          <Route path="reports" element={<ReportsPage />} />
-
-          {/* misc */}
-          <Route
-            path="settings"
-            element={
-              <div className="p-6">
-                <h1 className="text-2xl font-bold">Settings</h1>
-              </div>
-            }
-          />
           <Route
             path="profile"
             element={
-              <div className="p-6">
-                <h1 className="text-2xl font-bold">My Profile</h1>
-              </div>
-
+              <ProtectedRoute fallbackPath="/unauthorized">
+                <div className="p-6">
+                  <h1 className="text-2xl font-bold">My Profile</h1>
+                </div>
+              </ProtectedRoute>
             }
           />
         </Route>
       </Routes>
 
-
       {/* If background exists, render the modal route on top (matching same path) */}
       {background && (
         <Routes>
-          {/* Note: this path must match the nested admin modal path exactly */}
           <Route
             path="/admin/test-results/:orderNumber"
             element={<TestResultDetailPage />}
@@ -482,7 +425,7 @@ function App() {
   );
 }
 
-export default function App() {
+function App() {
   return (
     <Router>
       <AppRoutesInner />
