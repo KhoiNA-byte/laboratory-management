@@ -3,7 +3,8 @@ import { authSaga } from "./authSaga";
 import { userSaga } from "./userSaga";
 import { patientSaga } from "./patientSaga";
 import { testOrderSaga } from "./testOrderSaga";
-import { instrumentsSaga } from "./instrumentsSaga";
+import { instrumentSaga } from "./instrumentSaga";
+import { roleSaga } from "./roleSaga";
 import { reagentSaga } from "./reagentSaga";
 import { testResultsSaga } from "./testResultsSaga";
 
@@ -13,7 +14,8 @@ export function* rootSaga() {
     fork(userSaga),
     fork(patientSaga),
     fork(testOrderSaga),
-    fork(instrumentsSaga),
+    fork(instrumentSaga),
+    fork(roleSaga),
     fork(reagentSaga),
     fork(testResultsSaga),
   ]);

@@ -8,6 +8,7 @@ import {
 } from "react-router-dom";
 import { AppLayout } from "./layout/AppLayout";
 import { ProtectedRoute } from "./auth/ProtectedRoute";
+import { PERMISSIONS } from "./constants/permissions";
 
 // Dashboard Module
 import { DashboardPage } from "./modules/dashboard/DashboardPage";
@@ -23,12 +24,13 @@ import { ResetPasswordPage } from "./modules/iam/ResetPasswordPage";
 import { UsersPage } from "./modules/iam/UsersPage";
 import { RolesPage } from "./modules/iam/RolesPage";
 import UserInfoPage from "./modules/iam/UserInfoPage";
+import { UnauthorizedPage } from "./modules/iam/UnauthorizedPage";
 
 // Warehouse Module
 import InstrumentsPage from "./modules/warehouse/InstrumentsPage";
-import  WarehousePage from "./modules/warehouse/WarehousePage";
+import WarehousePage from "./modules/warehouse/WarehousePage";
 import { FlaggingRulesPage } from "./modules/warehouse/FlaggingRulesPage";
-import InstrumentDetailsPage from "./modules/warehouse/InstrumentDetailsPage";
+import InstrumentDetailsPage from "./modules/warehouse/InstrumentDetailPopup";
 import EditInstrumentPage from "./modules/warehouse/EditInstrumentPage";
 import AddInstrumentPage from "./modules/warehouse/AddInstrumentPage";
 
@@ -61,114 +63,350 @@ import { CommunityPage } from "./modules/community/CommunityPage";
 
 function AppRoutesInner() {
   const location = useLocation();
-  // If a navigate call set state.background (navigate(path, { state: { background: location } })),
-  // background will hold the previous location and we can render modal on top.
-  const state = location.state as { background?: Location } | undefined;
-  const background = state && state.background;
+  const background = location.state && location.state.background;
 
   return (
     <>
-      {/* Render main routes using background (so background UI stays rendered when modal is open) */}
       <Routes location={background || location}>
+        {/* Public Routes */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/verify-otp" element={<VerifyOTPPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/" element={<HomePageWrapper />} />
         <Route path="/landing" element={<HomePageWrapper />} />
         <Route path="/community" element={<CommunityPage />} />
+        <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
+        {/* User Home Route */}
         <Route
           path="/home"
           element={
-            <ProtectedRoute allowedRoles={["user"]}>
+            <ProtectedRoute
+              allowedPermissions={[PERMISSIONS.HOME_ACCESS]}
+              fallbackPath="/unauthorized"
+            >
               <HomePageLoggedIn />
             </ProtectedRoute>
           }
         />
 
-        {/* Admin area with layout */}
+        {/* Shared Admin Dashboard Layout */}
         <Route
           path="/admin"
           element={
-            <ProtectedRoute allowedRoles={["admin"]}>
+            <ProtectedRoute fallbackPath="/unauthorized">
               <AppLayout />
             </ProtectedRoute>
           }
         >
-          <Route index element={<DashboardPage />} />
-          <Route path="dashboard" element={<DashboardPage />} />
+          {/* Dashboard Routes */}
+          <Route
+            index
+            element={
+              <ProtectedRoute
+                allowedPermissions={[PERMISSIONS.DASHBOARD_READ]}
+                fallbackPath="/unauthorized"
+              >
+                <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="dashboard"
+            element={
+              <ProtectedRoute
+                allowedPermissions={[PERMISSIONS.DASHBOARD_READ]}
+                fallbackPath="/unauthorized"
+              >
+                <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
 
-          {/* IAM */}
-          <Route path="users" element={<UsersPage />} />
-          <Route path="roles" element={<RolesPage />} />
-          <Route path="user-info" element={<UserInfoPage />} />
+          {/* IAM Routes */}
+          <Route
+            path="users"
+            element={
+              <ProtectedRoute
+                allowedPermissions={[PERMISSIONS.USERS_READ]}
+                fallbackPath="/unauthorized"
+              >
+                <UsersPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="roles"
+            element={
+              <ProtectedRoute
+                allowedPermissions={[PERMISSIONS.ROLES_READ]}
+                fallbackPath="/unauthorized"
+              >
+                <RolesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="user-info"
+            element={
+              <ProtectedRoute fallbackPath="/unauthorized">
+                <UserInfoPage />
+              </ProtectedRoute>
+            }
+          />
 
-          {/* Warehouse */}
-          <Route path="instruments" element={<InstrumentsPage />} />
-          <Route path="instruments/new" element={<AddInstrumentPage />} />
+          {/* Warehouse Routes */}
+          <Route
+            path="instruments"
+            element={
+              <ProtectedRoute
+                allowedPermissions={[PERMISSIONS.INSTRUMENTS_READ]}
+                fallbackPath="/unauthorized"
+              >
+                <InstrumentsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="instruments/new"
+            element={
+              <ProtectedRoute
+                allowedPermissions={[PERMISSIONS.INSTRUMENTS_WRITE]}
+                fallbackPath="/unauthorized"
+              >
+                <AddInstrumentPage />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="instruments/:instrumentId/edit"
-            element={<EditInstrumentPage />}
+            element={
+              <ProtectedRoute
+                allowedPermissions={[PERMISSIONS.INSTRUMENTS_WRITE]}
+                fallbackPath="/unauthorized"
+              >
+                <EditInstrumentPage />
+              </ProtectedRoute>
+            }
           />
           <Route
             path="instruments/:instrumentId"
-            element={<InstrumentDetailsPage />}
+            element={
+              <ProtectedRoute
+                allowedPermissions={[PERMISSIONS.INSTRUMENTS_READ]}
+                fallbackPath="/unauthorized"
+              >
+                <InstrumentDetailsPage />
+              </ProtectedRoute>
+            }
           />
-          <Route path="warehouse" element={<WarehousePage />} />
-          <Route path="flagging-rules" element={<FlaggingRulesPage />} />
+          <Route
+            path="warehouse"
+            element={
+              <ProtectedRoute
+                allowedPermissions={[PERMISSIONS.WAREHOUSE_READ]}
+                fallbackPath="/unauthorized"
+              >
+                <WarehousePage />
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="flagging-rules"
+            element={
+              <ProtectedRoute
+                allowedPermissions={[PERMISSIONS.WAREHOUSE_WRITE]}
+                fallbackPath="/unauthorized"
+              >
+                <FlaggingRulesPage />
+              </ProtectedRoute>
+            }
+          />
 
-          {/* Test Orders */}
-          <Route path="test-orders" element={<TestOrdersPage />} />
-          <Route path="test-orders/new" element={<NewTestOrderPage />} />
+          {/* Test Order Routes */}
+          <Route
+            path="test-orders"
+            element={
+              <ProtectedRoute
+                allowedPermissions={[PERMISSIONS.TEST_ORDERS_READ]}
+                fallbackPath="/unauthorized"
+              >
+                <TestOrdersPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="test-orders/new"
+            element={
+              <ProtectedRoute
+                allowedPermissions={[PERMISSIONS.TEST_ORDERS_WRITE]}
+                fallbackPath="/unauthorized"
+              >
+                <NewTestOrderPage />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="test-orders/:orderId/edit"
-            element={<UpdateTestOrderPage />}
+            element={
+              <ProtectedRoute
+                allowedPermissions={[PERMISSIONS.TEST_ORDERS_WRITE]}
+                fallbackPath="/unauthorized"
+              >
+                <UpdateTestOrderPage />
+              </ProtectedRoute>
+            }
           />
           <Route
             path="test-orders/:orderId"
-            element={<TestOrderDetailsPage />}
+            element={
+              <ProtectedRoute
+                allowedPermissions={[PERMISSIONS.TEST_ORDERS_READ]}
+                fallbackPath="/unauthorized"
+              >
+                <TestOrderDetailsPage />
+              </ProtectedRoute>
+            }
           />
-
-          {/* Test Results routes (detail route under /admin) */}
-          <Route path="test-results" element={<MyTestResultsPage />} />
+          
           <Route
-            path="test-results/:orderNumber"
-            element={<TestResultDetailPage />}
+            path="my-test-results"
+            element={
+              <ProtectedRoute
+                allowedPermissions={[PERMISSIONS.MY_TEST_RESULTS_READ]}
+                fallbackPath="/unauthorized"
+              >
+                <MyTestResultsPage />
+              </ProtectedRoute>
+            }
           />
 
-          <Route path="my-test-results" element={<MyTestResultsPage />} />
-          {/* Comments */}
+          {/* Monitoring Routes */}
+          <Route
+            path="monitoring"
+            element={
+              <ProtectedRoute
+                allowedPermissions={[PERMISSIONS.MONITORING_READ]}
+                fallbackPath="/unauthorized"
+              >
+                <MonitoringPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="hl7-messages"
+            element={
+              <ProtectedRoute
+                allowedPermissions={[PERMISSIONS.MONITORING_READ]}
+                fallbackPath="/unauthorized"
+              >
+                <HL7MessagesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="quarantine"
+            element={
+              <ProtectedRoute
+                allowedPermissions={[PERMISSIONS.MONITORING_READ]}
+                fallbackPath="/unauthorized"
+              >
+                <QuarantinePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="instrument-logs"
+            element={
+              <ProtectedRoute
+                allowedPermissions={[PERMISSIONS.MONITORING_READ]}
+                fallbackPath="/unauthorized"
+              >
+                <InstrumentLogsPage />
+              </ProtectedRoute>
+            }
+          />
 
-          {/* Monitoring */}
-          <Route path="monitoring" element={<MonitoringPage />} />
-          <Route path="hl7-messages" element={<HL7MessagesPage />} />
-          <Route path="quarantine" element={<QuarantinePage />} />
-          <Route path="instrument-logs" element={<InstrumentLogsPage />} />
+          {/* Patient Routes */}
+          <Route
+            path="patients"
+            element={
+              <ProtectedRoute
+                allowedPermissions={[PERMISSIONS.PATIENTS_READ]}
+                fallbackPath="/unauthorized"
+              >
+                <PatientsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="patients/:id"
+            element={
+              <ProtectedRoute
+                allowedPermissions={[PERMISSIONS.PATIENTS_READ]}
+                fallbackPath="/unauthorized"
+              >
+                <PatientDetailsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="patients/:id/edit"
+            element={
+              <ProtectedRoute
+                allowedPermissions={[PERMISSIONS.PATIENTS_WRITE]}
+                fallbackPath="/unauthorized"
+              >
+                <EditPatientPage />
+              </ProtectedRoute>
+            }
+          />
 
-          {/* Patients */}
-          <Route path="patients/:id/edit" element={<EditPatientPage />} />
-          <Route path="patients/:id" element={<PatientDetailsPage />} />
-          <Route path="patients" element={<PatientsPage />} />
+          {/* Audit Routes */}
+          <Route
+            path="audit-logs"
+            element={
+              <ProtectedRoute
+                allowedPermissions={[PERMISSIONS.AUDIT_READ]}
+                fallbackPath="/unauthorized"
+              >
+                <AuditLogsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="reports"
+            element={
+              <ProtectedRoute
+                allowedPermissions={[PERMISSIONS.REPORTS_READ]}
+                fallbackPath="/unauthorized"
+              >
+                <ReportsPage />
+              </ProtectedRoute>
+            }
+          />
 
-          {/* Audit */}
-          <Route path="audit-logs" element={<AuditLogsPage />} />
-          <Route path="reports" element={<ReportsPage />} />
-
-          {/* misc */}
+          {/* Settings Route - Any authenticated user in admin layout */}
           <Route
             path="settings"
             element={
-              <div className="p-6">
-                <h1 className="text-2xl font-bold">Settings</h1>
-              </div>
+              <ProtectedRoute fallbackPath="/unauthorized">
+                <div className="p-6">
+                  <h1 className="text-2xl font-bold">Settings</h1>
+                  <p>Settings page coming soon...</p>
+                </div>
+              </ProtectedRoute>
             }
           />
           <Route
             path="profile"
             element={
-              <div className="p-6">
-                <h1 className="text-2xl font-bold">My Profile</h1>
-              </div>
+              <ProtectedRoute fallbackPath="/unauthorized">
+                <div className="p-6">
+                  <h1 className="text-2xl font-bold">My Profile</h1>
+                </div>
+              </ProtectedRoute>
             }
           />
         </Route>
@@ -177,7 +415,6 @@ function AppRoutesInner() {
       {/* If background exists, render the modal route on top (matching same path) */}
       {background && (
         <Routes>
-          {/* Note: this path must match the nested admin modal path exactly */}
           <Route
             path="/admin/test-results/:orderNumber"
             element={<TestResultDetailPage />}
@@ -188,10 +425,12 @@ function AppRoutesInner() {
   );
 }
 
-export default function App() {
+function App() {
   return (
     <Router>
       <AppRoutesInner />
     </Router>
   );
 }
+
+export default App;

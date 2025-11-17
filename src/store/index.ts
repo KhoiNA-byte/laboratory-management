@@ -1,4 +1,4 @@
-// store/index.ts
+
 import { configureStore } from "@reduxjs/toolkit";
 import createSagaMiddleware from "redux-saga";
 
@@ -6,7 +6,8 @@ import authReducer from "./slices/authSlice";
 import userReducer from "./slices/userSlice";
 import patientReducer from "./slices/patientSlice";
 import testOrderReducer from "./slices/testOrderSlice";
-import instrumentsReducer from "./slices/instrumentsSlice";
+import instrumentReducer from "./slices/instrumentsSlice";
+import roleReducer from "./slices/roleSlice";
 import testResultsReducer from "./slices/testResultsSlice"; 
 import reagentReducer from "./slices/reagentSlice"; 
 import { rootSaga } from "./sagas";
@@ -19,7 +20,8 @@ export const store = configureStore({
     users: userReducer,
     patients: patientReducer,
     testOrders: testOrderReducer,
-    instruments: instrumentsReducer,
+    instruments: instrumentReducer,
+    roles: roleReducer,
     reagents: reagentReducer,
     testResults: testResultsReducer, // <-- THÊM DÒNG NÀY
   },

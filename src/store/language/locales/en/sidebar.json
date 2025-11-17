@@ -1,0 +1,14 @@
+{
+  "dashboard": "Dashboard",
+  "users_management": "Users Management",
+  "roles_management": "Roles Management",
+  "patient_records": "Patient Records",
+  "test_orders": "Test Orders",
+  "my_test_results": "My Test Results",
+  "instruments": "Instruments",
+  "warehouse": "Warehouse",
+  "monitoring": "Monitoring",
+  "reports": "Reports",
+  "my_profile": "My Profile",
+  "settings": "Settings"
+}

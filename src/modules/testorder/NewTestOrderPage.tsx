@@ -1,30 +1,213 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { TestOrderFormData } from "../../types/testOrder";
+import {
+  addTestOrder,
+  getUserByPhoneNumber,
+} from "../../services/testOrderApi";
+import { ReturningPatientOrderPage } from "./ReturningPatientOrderPage";
+import {
+  validatePhoneNumber,
+  validateTester,
+  validateTestType,
+  validateRunDate,
+} from "../../utils/validation";
+import {
+  formatPhoneInput,
+  convertDatePickerToDisplay,
+  formatDateInput,
+  convertDisplayToDatePicker,
+  getTodayFormatted,
+} from "../../utils/helpers";
 
 const NewTestOrderPage: React.FC = () => {
   const navigate = useNavigate();
 
-  // Form state - initially empty for new order
-  const [formData, setFormData] = useState({
-    patient: "",
-    priority: "Routine",
-    orderedBy: "",
-    testType: "",
+  // Store found user ID from phone search
+  const [foundUserId, setFoundUserId] = useState<string | null>(null);
+
+  // Form state
+  const [formData, setFormData] = useState<TestOrderFormData>({
+    patientName: "-----",
+    age: "-----",
+    gender: "-----",
+    phoneNumber: "",
     status: "Pending",
-    notes: "",
+    createDate: getTodayFormatted(),
+    tester: "",
+    runDate: "",
+    testType: "",
   });
 
+  // Validation errors state
+  const [errors, setErrors] = useState({
+    patientName: "",
+    age: "",
+    gender: "",
+    phoneNumber: "",
+    tester: "",
+    runDate: "",
+    testType: "",
+  });
+
+  // Handle input changes with validation
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
+
+    // Validate the field
+    let error = "";
+    switch (field) {
+      case "phoneNumber":
+        error = validatePhoneNumber(value);
+        break;
+      case "tester":
+        error = validateTester(value);
+        break;
+      case "testType":
+        error = validateTestType(value);
+        break;
+      case "runDate":
+        error = validateRunDate(value, formData.createDate);
+        break;
+    }
+
+    setErrors((prev) => ({
+      ...prev,
+      [field]: error,
+    }));
   };
 
-  const handleSave = () => {
-    console.log("Creating new test order:", formData);
-    // Here you would typically make an API call to create the test order
-    navigate("/admin/test-orders");
+  // Handle run date change from date picker
+  const handleRunDateChange = (value: string) => {
+    if (value) {
+      const formattedDate = convertDatePickerToDisplay(value);
+      handleInputChange("runDate", formattedDate);
+    } else {
+      handleInputChange("runDate", "");
+    }
+  };
+
+  // Handle manual input for run date with MM/DD/YYYY format
+  const handleRunDateTextChange = (value: string) => {
+    const formatted = formatDateInput(value);
+    setFormData((prev) => ({ ...prev, runDate: formatted }));
+
+    // Validate if complete
+    if (formatted.length === 10) {
+      const error = validateRunDate(formatted, formData.createDate);
+      setErrors((prev) => ({ ...prev, runDate: error }));
+    } else if (formatted.length > 0) {
+      setErrors((prev) => ({
+        ...prev,
+        runDate: "Please enter complete date in MM/DD/YYYY format",
+      }));
+    } else {
+      setErrors((prev) => ({
+        ...prev,
+        runDate: "Run date is required",
+      }));
+    }
+  };
+
+  // Convert MM/DD/YYYY back to YYYY-MM-DD for date input
+  const getDateInputValue = (dateStr: string): string => {
+    return convertDisplayToDatePicker(dateStr);
+  };
+
+  // Handle phone number input to only allow numbers
+  const handlePhoneChange = (value: string) => {
+    const numericValue = formatPhoneInput(value);
+    handleInputChange("phoneNumber", numericValue);
+  };
+
+  // Handle search phone - Call API to search user by phone number
+  const handleSearchPhone = async () => {
+    if (!formData.phoneNumber || formData.phoneNumber.trim() === "") {
+      alert("Please enter a phone number");
+      return;
+    }
+
+    try {
+      console.log("Searching for phone:", formData.phoneNumber);
+
+      // Call API to get user by phone number
+      const userData = await getUserByPhoneNumber(formData.phoneNumber);
+
+      if (userData) {
+        // Check if user status is inactive
+        if (userData.status === "inactive") {
+          // User is inactive - show error and don't fill data
+          setFoundUserId(null);
+          setErrors((prev) => ({
+            ...prev,
+            phoneNumber: "This patient account is inactive and cannot be used",
+          }));
+          console.log("User found but status is inactive:", userData);
+          return;
+        }
+
+        // User found and active - save userId and auto-fill patient information
+        setFoundUserId(userData.userId); // Store the userId for later use
+
+        setFormData((prev) => ({
+          ...prev,
+          patientName: userData.name || "-----",
+          age: userData.age ? userData.age.toString() : "-----",
+          gender: userData.gender || "-----",
+        }));
+
+        // Clear phone error if any
+        setErrors((prev) => ({
+          ...prev,
+          phoneNumber: "",
+        }));
+
+        console.log("User found and data filled:", userData);
+        console.log("Saved userId:", userData.userId);
+        alert(`Patient found: ${userData.name}`);
+      } else {
+        // User not found - clear saved userId
+        setFoundUserId(null);
+        alert("No patient found with this phone number");
+        console.log("No user found with phone:", formData.phoneNumber);
+      }
+    } catch (error) {
+      console.error("Error searching for user:", error);
+      alert("An error occurred while searching. Please try again.");
+    }
+  };
+
+  // Check if form is valid
+  const isFormValid = () => {
+    return (
+      !errors.phoneNumber &&
+      !errors.tester &&
+      !errors.testType &&
+      !errors.runDate &&
+      formData.phoneNumber.trim() &&
+      formData.tester.trim() &&
+      formData.testType.trim() &&
+      formData.runDate
+    );
+  };
+
+  const handleSave = async () => {
+    try {
+      // Call API service to create test order with existing userId if found
+      const result = await addTestOrder(formData, foundUserId);
+
+      if (result.success) {
+        navigate("/admin/test-orders");
+      } else {
+        alert("Failed to create test order. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error saving test order:", error);
+      alert("An error occurred while saving. Please try again.");
+    }
   };
 
   const handleCancel = () => {
@@ -45,207 +228,16 @@ const NewTestOrderPage: React.FC = () => {
 
           {/* Form Content */}
           <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Left Column */}
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Patient
-                  </label>
-                  <div className="relative">
-                    <select
-                      value={formData.patient}
-                      onChange={(e) =>
-                        handleInputChange("patient", e.target.value)
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
-                    >
-                      <option value="">Select a patient</option>
-                      <option value="John Doe IMRN-2024-0010">
-                        John Doe IMRN-2024-0010
-                      </option>
-                      <option value="Jane Smith IMRN-2024-0011">
-                        Jane Smith IMRN-2024-0011
-                      </option>
-                      <option value="Robert Johnson IMRN-2024-0012">
-                        Robert Johnson IMRN-2024-0012
-                      </option>
-                      <option value="Emily Williams IMRN-2024-0013">
-                        Emily Williams IMRN-2024-0013
-                      </option>
-                      <option value="Michael Brown IMRN-2024-0014">
-                        Michael Brown IMRN-2024-0014
-                      </option>
-                    </select>
-                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                      <svg
-                        className="h-5 w-5 text-gray-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Priority
-                  </label>
-                  <div className="relative">
-                    <select
-                      value={formData.priority}
-                      onChange={(e) =>
-                        handleInputChange("priority", e.target.value)
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
-                    >
-                      <option value="Routine">Routine</option>
-                      <option value="Urgent">Urgent</option>
-                      <option value="Stat">Stat</option>
-                    </select>
-                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                      <svg
-                        className="h-5 w-5 text-gray-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Ordered By
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.orderedBy}
-                    onChange={(e) =>
-                      handleInputChange("orderedBy", e.target.value)
-                    }
-                    placeholder="Enter doctor's name"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Notes
-                  </label>
-                  <textarea
-                    value={formData.notes}
-                    onChange={(e) => handleInputChange("notes", e.target.value)}
-                    rows={4}
-                    placeholder="Enter any additional notes..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                  />
-                </div>
-              </div>
-
-              {/* Right Column */}
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Test Type
-                  </label>
-                  <div className="relative">
-                    <select
-                      value={formData.testType}
-                      onChange={(e) =>
-                        handleInputChange("testType", e.target.value)
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
-                    >
-                      <option value="">Select test type</option>
-                      <option value="Complete Blood Count (CBC)">
-                        Complete Blood Count (CBC)
-                      </option>
-                      <option value="Lipid Panel">Lipid Panel</option>
-                      <option value="Thyroid Function Test">
-                        Thyroid Function Test
-                      </option>
-                      <option value="Liver Function Test">
-                        Liver Function Test
-                      </option>
-                      <option value="Kidney Function Test">
-                        Kidney Function Test
-                      </option>
-                      <option value="Glucose Test">Glucose Test</option>
-                      <option value="Hemoglobin A1C">Hemoglobin A1C</option>
-                      <option value="Basic Metabolic Panel">
-                        Basic Metabolic Panel
-                      </option>
-                    </select>
-                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                      <svg
-                        className="h-5 w-5 text-gray-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Status
-                  </label>
-                  <div className="relative">
-                    <select
-                      value={formData.status}
-                      onChange={(e) =>
-                        handleInputChange("status", e.target.value)
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
-                    >
-                      <option value="Pending">Pending</option>
-                      <option value="In Progress">In Progress</option>
-                      <option value="Completed">Completed</option>
-                      <option value="Reviewed">Reviewed</option>
-                    </select>
-                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                      <svg
-                        className="h-5 w-5 text-gray-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <ReturningPatientOrderPage
+              formData={formData}
+              errors={errors}
+              handleInputChange={handleInputChange}
+              handlePhoneChange={handlePhoneChange}
+              handleSearchPhone={handleSearchPhone}
+              handleRunDateChange={handleRunDateChange}
+              handleRunDateTextChange={handleRunDateTextChange}
+              getDateInputValue={getDateInputValue}
+            />
 
             {/* Action Buttons */}
             <div className="flex justify-end space-x-4 mt-8 pt-6 border-t border-gray-200">
@@ -257,9 +249,14 @@ const NewTestOrderPage: React.FC = () => {
               </button>
               <button
                 onClick={handleSave}
-                className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium"
+                disabled={!isFormValid()}
+                className={`px-6 py-2 rounded-md font-medium transition-colors ${
+                  isFormValid()
+                    ? "bg-blue-600 text-white hover:bg-blue-700"
+                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                }`}
               >
-                Save Changes
+                Create
               </button>
             </div>
           </div>

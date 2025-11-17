@@ -1,257 +1,340 @@
-// AddInstrument.tsx
-import React, { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "../../store/index";
-import { fetchReagentsRequest } from "../../store/slices/reagentSlice";
-import { addInstrumentRequest } from "../../store/slices/instrumentsSlice";
+import React, { useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { Instrument } from '../../store/types';
 
-interface AddInstrumentProps {
-  isOpen: boolean;
+interface AddInstrumentPopupProps {
   onClose: () => void;
+  onSave: (instrument: Instrument) => void;
 }
 
-const AddInstrument: React.FC<AddInstrumentProps> = ({ isOpen, onClose }) => {
-  const dispatch = useDispatch<any>();
-
-  // Lấy danh sách reagents từ store
-  const { list: reagents, loading: loadingReagents } = useSelector(
-    (state: RootState) => state.reagents
-  );
-
+const AddInstrumentPopup: React.FC<AddInstrumentPopupProps> = ({ 
+  onClose,
+  onSave 
+}) => {
+  const dispatch = useDispatch();
+  const [saving, setSaving] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  
   const [formData, setFormData] = useState({
     name: "",
     model: "",
-    status: "Active",
     serialNumber: "",
-    location: "",
     manufacturer: "",
-    supportedTest: [] as string[],
-    supportedReagents: [] as string[],
+    status: "Active" as "Active" | "Maintenance" | "Inactive",
+    location: "",
+    nextCalibration: "",
   });
 
-  const [selectedReagent, setSelectedReagent] = useState<string>("");
+  // Predefined location options
+  const locationOptions = [
+    "L-001",
+    "L-002", 
+    "L-003",
+    "L-004",
+    "L-005",
+    "L-006",
+    "L-007",
+    "L-008"
+  ];
 
-  // --- Fetch reagents khi mở popup ---
-  useEffect(() => {
-    if (isOpen) dispatch(fetchReagentsRequest());
-  }, [isOpen, dispatch]);
-
-  useEffect(() => {
-    if (reagents.length > 0) setSelectedReagent(reagents[0].name);
-  }, [reagents]);
-
-  const handleInputChange = (field: keyof typeof formData, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleAddTest = () => {
-    const t = prompt("Enter supported test (e.g., CBC)");
-    if (t && !formData.supportedTest.includes(t)) {
-      setFormData((prev) => ({
-        ...prev,
-        supportedTest: [...prev.supportedTest, t],
-      }));
+  // Validation functions
+  const validateField = (field: string, value: string): string => {
+    const specialCharRegex = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/;
+    
+    switch (field) {
+      case 'name':
+        if (!value.trim()) return 'Instrument name is required';
+        if (specialCharRegex.test(value)) return 'Instrument name cannot contain special characters';
+        if (value.trim().length < 2) return 'Instrument name must be at least 2 characters';
+        return '';
+      
+      case 'model':
+        if (!value.trim()) return 'Model is required';
+        if (specialCharRegex.test(value)) return 'Model cannot contain special characters';
+        return '';
+      
+      case 'serialNumber':
+        if (!value.trim()) return 'Serial number is required';
+        if (specialCharRegex.test(value)) return 'Serial number cannot contain special characters';
+        return '';
+      
+      case 'manufacturer':
+        if (!value.trim()) return 'Manufacturer is required';
+        if (specialCharRegex.test(value)) return 'Manufacturer cannot contain special characters';
+        return '';
+      
+      case 'location':
+        if (!value.trim()) return 'Location is required';
+        return '';
+      
+      case 'nextCalibration':
+        if (!value.trim()) return 'Next calibration date is required';
+        if (new Date(value) <= new Date()) return 'Next calibration must be in the future';
+        return '';
+      
+      default:
+        return '';
     }
   };
 
-  const handleAddReagent = () => {
-    if (
-      selectedReagent &&
-      !formData.supportedReagents.includes(selectedReagent)
-    ) {
-      setFormData((prev) => ({
-        ...prev,
-        supportedReagents: [...prev.supportedReagents, selectedReagent],
-      }));
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
     }
   };
 
-  const handleSave = () => {
-    dispatch(addInstrumentRequest(formData));
-    onClose();
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+    
+    // Validate all fields
+    Object.keys(formData).forEach(field => {
+      const error = validateField(field, formData[field as keyof typeof formData]);
+      if (error) {
+        newErrors[field] = error;
+      }
+    });
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
-  if (!isOpen) return null;
+  const handleSave = async () => {
+    if (!validateForm()) {
+      alert('Please fix all validation errors before saving');
+      return;
+    }
+
+    try {
+      setSaving(true);
+      
+      const newInstrument = {
+        name: formData.name.trim(),
+        model: formData.model.trim(),
+        serialNumber: formData.serialNumber.trim(),
+        manufacturer: formData.manufacturer.trim(),
+        status: formData.status,
+        location: formData.location,
+        nextCalibration: formData.nextCalibration,
+        calibrationDue: false
+      };
+
+      // Dispatch create action via Redux Saga
+      dispatch({ 
+        type: 'instruments/addInstrumentRequest', 
+        payload: newInstrument
+      });
+      
+      onClose();
+    } catch (error) {
+      console.error('Error saving instrument:', error);
+      alert('Error creating instrument');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancel = () => {
+    if (formData.name || formData.model || formData.serialNumber) {
+      if (window.confirm('Are you sure you want to cancel? All changes will be lost.')) {
+        onClose();
+      }
+    } else {
+      onClose();
+    }
+  };
+
+  // Get minimum date for calibration (tomorrow)
+  const getMinCalibrationDate = () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().split('T')[0];
+  };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto p-6">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-semibold text-gray-900">
-            Add New Instrument
-          </h2>
+        <div className="flex justify-between items-start p-6 border-b">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900">Add New Instrument</h2>
+            <p className="text-gray-600 text-sm mt-1">Create a new laboratory instrument</p>
+          </div>
           <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            onClick={handleCancel}
+            className="text-gray-400 hover:text-gray-600 transition-colors p-1"
           >
-            ✕
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </button>
         </div>
 
-        {/* Form */}
-        <div className="space-y-6">
-          {/* Basic Info */}
+        {/* Form Content */}
+        <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Instrument Name
-              </label>
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) => handleInputChange("name", e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Model
-              </label>
-              <input
-                type="text"
-                value={formData.model}
-                onChange={(e) => handleInputChange("model", e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Serial Number
-              </label>
-              <input
-                type="text"
-                value={formData.serialNumber}
-                onChange={(e) =>
-                  handleInputChange("serialNumber", e.target.value)
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Manufacturer
-              </label>
-              <input
-                type="text"
-                value={formData.manufacturer}
-                onChange={(e) =>
-                  handleInputChange("manufacturer", e.target.value)
-                }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Location
-              </label>
-              <input
-                type="text"
-                value={formData.location}
-                onChange={(e) => handleInputChange("location", e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Status
-              </label>
-              <select
-                value={formData.status}
-                onChange={(e) => handleInputChange("status", e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white"
-              >
-                <option value="Active">Active</option>
-                <option value="Maintenance">Maintenance</option>
-                <option value="Inactive">Inactive</option>
-              </select>
-            </div>
-          </div>
+            {/* Left Column */}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Instrument Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    errors.name ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="Enter instrument name"
+                  required
+                />
+                {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+              </div>
 
-          {/* Supported Tests */}
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <div className="flex justify-between items-center mb-2">
-              <span className="font-medium text-gray-700">Supported Tests</span>
-              <button
-                onClick={handleAddTest}
-                className="text-sm text-blue-600 hover:underline"
-              >
-                + Add
-              </button>
-            </div>
-            {formData.supportedTest.length === 0 ? (
-              <div className="text-gray-400 text-sm">No tests added</div>
-            ) : (
-              <ul className="list-disc pl-5 text-gray-700">
-                {formData.supportedTest.map((t, i) => (
-                  <li key={i}>{t}</li>
-                ))}
-              </ul>
-            )}
-          </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Model <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.model}
+                  onChange={(e) => handleInputChange('model', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    errors.model ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="Enter model"
+                  required
+                />
+                {errors.model && <p className="text-red-500 text-xs mt-1">{errors.model}</p>}
+              </div>
 
-          {/* Supported Reagents */}
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <div className="flex justify-between items-center mb-2">
-              <span className="font-medium text-gray-700">
-                Supported Reagents
-              </span>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Serial Number <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.serialNumber}
+                  onChange={(e) => handleInputChange('serialNumber', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    errors.serialNumber ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="Enter serial number"
+                  required
+                />
+                {errors.serialNumber && <p className="text-red-500 text-xs mt-1">{errors.serialNumber}</p>}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Manufacturer <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.manufacturer}
+                  onChange={(e) => handleInputChange('manufacturer', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    errors.manufacturer ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="Enter manufacturer"
+                  required
+                />
+                {errors.manufacturer && <p className="text-red-500 text-xs mt-1">{errors.manufacturer}</p>}
+              </div>
             </div>
-            <div className="flex gap-2 mb-3">
-              <select
-                value={selectedReagent}
-                onChange={(e) => setSelectedReagent(e.target.value)}
-                className="flex-grow px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:outline-none"
-                disabled={loadingReagents}
-              >
-                {loadingReagents ? (
-                  <option>Loading...</option>
-                ) : (
-                  reagents.map((r) => (
-                    <option key={r.id} value={r.name}>
-                      {r.name}
+
+            {/* Right Column */}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Status <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={formData.status}
+                  onChange={(e) => handleInputChange('status', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="Active">Active</option>
+                  <option value="Maintenance">Maintenance</option>
+                  <option value="Inactive">Inactive</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Location <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={formData.location}
+                  onChange={(e) => handleInputChange('location', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    errors.location ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  required
+                >
+                  <option value="">Select a location</option>
+                  {locationOptions.map((location) => (
+                    <option key={location} value={location}>
+                      {location}
                     </option>
-                  ))
-                )}
-              </select>
-              <button
-                onClick={handleAddReagent}
-                className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                disabled={loadingReagents}
-              >
-                + Add
-              </button>
-            </div>
-            {formData.supportedReagents.length === 0 ? (
-              <div className="text-gray-400 text-sm">No reagents added</div>
-            ) : (
-              <ul className="list-disc pl-5 text-gray-700">
-                {formData.supportedReagents.map((r, i) => (
-                  <li key={i}>{r}</li>
-                ))}
-              </ul>
-            )}
-          </div>
+                  ))}
+                </select>
+                {errors.location && <p className="text-red-500 text-xs mt-1">{errors.location}</p>}
+              </div>
 
-          {/* Actions */}
-          <div className="flex justify-end gap-3 pt-4">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-100"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSave}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-            >
-              Add Instrument
-            </button>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Next Calibration <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="date"
+                  value={formData.nextCalibration}
+                  onChange={(e) => handleInputChange('nextCalibration', e.target.value)}
+                  min={getMinCalibrationDate()}
+                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    errors.nextCalibration ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  required
+                />
+                {errors.nextCalibration && <p className="text-red-500 text-xs mt-1">{errors.nextCalibration}</p>}
+              </div>
+            </div>
           </div>
+        </div>
+
+        {/* Footer */}
+        <div className="flex justify-end space-x-3 p-6 border-t bg-gray-50 rounded-b-lg">
+          <button
+            onClick={handleCancel}
+            disabled={saving}
+            className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center space-x-2"
+          >
+            {saving && (
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+            )}
+            <span>{saving ? 'Creating...' : 'Create Instrument'}</span>
+          </button>
         </div>
       </div>
     </div>
   );
 };
 
-export default AddInstrument;
+export default AddInstrumentPopup;
