@@ -1,0 +1,14 @@
+{
+    "dashboard": "Bảng điều khiển",
+    "users_management": "Quản lý người dùng",
+    "roles_management": "Quản lý vai trò",
+    "patient_records": "Hồ sơ bệnh nhân",
+    "test_orders": "Đơn xét nghiệm",
+    "my_test_results": "Kết quả xét nghiệm của tôi",
+    "instruments": "Thiết bị",
+    "warehouse": "Kho",
+    "monitoring": "Giám sát",
+    "reports": "Báo cáo",
+    "my_profile": "Hồ sơ của tôi",
+    "settings": "Cài đặt"
+  }
