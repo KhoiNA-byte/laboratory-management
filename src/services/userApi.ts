@@ -18,6 +18,53 @@ export interface User {
   updatedAt?: string;
 }
 
+// Helper function to check for existing phone or userId
+const checkExistingUser = async (phone: string, id?: string): Promise<void> => {
+  try {
+    const users = await getUsersAPI();
+
+    // Check if phone already exists
+    const existingPhone = users.find((user) => user.phone === phone);
+    if (existingPhone) {
+      throw new Error(`Phone number ${phone} is already registered`);
+    }
+
+    // Check if userId (id) already exists (for create operations)
+    if (id) {
+      const existingUserId = users.find((user) => user.id === id);
+      if (existingUserId) {
+        throw new Error(`User ID ${id} already exists`);
+      }
+    }
+  } catch (error) {
+    console.error("Error checking existing user:", error);
+    throw error;
+  }
+};
+
+// Helper function to check for existing phone during update (excluding current user)
+const checkExistingPhoneForUpdate = async (
+  phone: string,
+  currentUserId: string
+): Promise<void> => {
+  try {
+    const users = await getUsersAPI();
+
+    // Check if phone already exists for another user
+    const existingPhone = users.find(
+      (user) => user.phone === phone && user.id !== currentUserId
+    );
+    if (existingPhone) {
+      throw new Error(
+        `Phone number ${phone} is already registered by another user`
+      );
+    }
+  } catch (error) {
+    console.error("Error checking existing phone for update:", error);
+    throw error;
+  }
+};
+
 // Get all users
 export const getUsersAPI = async (): Promise<User[]> => {
   try {
@@ -35,6 +82,9 @@ export const createUserAPI = async (
   userData: Omit<User, "createdAt" | "updatedAt">
 ): Promise<User> => {
   try {
+    // Validate if phone or userId already exists
+    await checkExistingUser(userData.phone, userData.id);
+
     const user = await apiClient.post<User>(USERS_ENDPOINT, {
       ...userData,
       createdAt: new Date().toISOString(),
@@ -55,6 +105,9 @@ export const updateUserAPI = async (userData: User): Promise<User> => {
     const userId = userData.userId;
     console.log("Found userId:", userId);
     console.log("Using endpoint:", `${USERS_ENDPOINT}/${userData.userId}`);
+
+    // Validate if phone already exists for another user
+    await checkExistingPhoneForUpdate(userData.phone, userData.id);
 
     const user = await apiClient.put<User>(
       `${USERS_ENDPOINT}/${userData.userId}`,
