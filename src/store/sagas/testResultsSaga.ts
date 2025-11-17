@@ -34,7 +34,7 @@ function randBetween(a: number, b: number) {
 function generateRunId() {
   try {
     // @ts-ignore
-    if (typeof crypto !== "Unknown" && "randomUUID" in crypto) {
+    if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
       // @ts-ignore
       return String(crypto.randomUUID());
     }

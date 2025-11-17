@@ -6,7 +6,7 @@ import authReducer from "./slices/authSlice";
 import userReducer from "./slices/userSlice";
 import patientReducer from "./slices/patientSlice";
 import testOrderReducer from "./slices/testOrderSlice";
-import instrumentReducer from "./slices/instrumentSlice";
+import instrumentReducer from "./slices/instrumentsSlice";
 import roleReducer from "./slices/roleSlice";
 import testResultsReducer from "./slices/testResultsSlice"; 
 import reagentReducer from "./slices/reagentSlice"; 
@@ -20,13 +20,10 @@ export const store = configureStore({
     users: userReducer,
     patients: patientReducer,
     testOrders: testOrderReducer,
-
     instruments: instrumentReducer,
     roles: roleReducer,
-
     reagents: reagentReducer,
     testResults: testResultsReducer, // <-- THÊM DÒNG NÀY
-
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

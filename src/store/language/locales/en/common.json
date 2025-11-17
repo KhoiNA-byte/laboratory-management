@@ -1,0 +1,11 @@
+{
+    "welcome": "Welcome",
+    "login": "Login",
+    "logout": "Logout",
+    "profile": "Profile",
+    "settings": "Settings",
+    "dashboard": "Dashboard",
+    "users": "Users",
+    "roles": "Roles",
+    "history": "History"
+  }

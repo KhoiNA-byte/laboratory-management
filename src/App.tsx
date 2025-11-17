@@ -1,4 +1,11 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+// src/App.tsx
+import React from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useLocation,
+} from "react-router-dom";
 import { AppLayout } from "./layout/AppLayout";
 import { ProtectedRoute } from "./auth/ProtectedRoute";
 import { PERMISSIONS } from "./constants/permissions";
@@ -21,8 +28,7 @@ import { UnauthorizedPage } from "./modules/iam/UnauthorizedPage";
 
 // Warehouse Module
 import InstrumentsPage from "./modules/warehouse/InstrumentsPage";
-import ReagentsPage  from "./modules/warehouse/WarehousePage";
-import  WarehousePage  from "./modules/warehouse/WarehousePage";
+import WarehousePage from "./modules/warehouse/WarehousePage";
 import { FlaggingRulesPage } from "./modules/warehouse/FlaggingRulesPage";
 import InstrumentDetailsPage from "./modules/warehouse/InstrumentDetailPopup";
 import EditInstrumentPage from "./modules/warehouse/EditInstrumentPage";
@@ -30,11 +36,12 @@ import AddInstrumentPage from "./modules/warehouse/AddInstrumentPage";
 
 // Test Order Module
 import { TestOrdersPage } from "./modules/testorder/TestOrdersPage";
-import { TestResultPage } from "./modules/testorder/TestResultPage";
-import MyTestResultsPage from "./modules/testorder/NewTestOrderPage";
+import TestResultDetailPage from "./modules/testresult/TestResultDetailPage";
+import MyTestResultsPage from "./modules/testresult/MyTestResultsPage";
 import TestOrderDetailsPage from "./modules/testorder/TestOrderDetailsPage";
 import UpdateTestOrderPage from "./modules/testorder/UpdateTestOrderPage";
 import NewTestOrderPage from "./modules/testorder/NewTestOrderPage";
+import CommentsPage from "./modules/testresult/CommentsPage";
 
 // Monitoring Module
 import { MonitoringPage } from "./modules/monitoring/MonitoringPage";
@@ -54,10 +61,13 @@ import { ReportsPage } from "./modules/audit/ReportsPage";
 // Community Module
 import { CommunityPage } from "./modules/community/CommunityPage";
 
-function App() {
+function AppRoutesInner() {
+  const location = useLocation();
+  const background = location.state && location.state.background;
+
   return (
-    <Router>
-      <Routes>
+    <>
+      <Routes location={background || location}>
         {/* Public Routes */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/verify-otp" element={<VerifyOTPPage />} />
@@ -201,17 +211,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="reagents"
-            element={
-              <ProtectedRoute
-                allowedPermissions={[PERMISSIONS.WAREHOUSE_READ]}
-                fallbackPath="/unauthorized"
-              >
-                <ReagentsPage />
-              </ProtectedRoute>
-            }
-          />
+          
           <Route
             path="flagging-rules"
             element={
@@ -269,17 +269,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="test-results"
-            element={
-              <ProtectedRoute
-                allowedPermissions={[PERMISSIONS.TEST_ORDERS_READ]}
-                fallbackPath="/unauthorized"
-              >
-                <TestResultPage />
-              </ProtectedRoute>
-            }
-          />
+          
           <Route
             path="my-test-results"
             element={
@@ -409,21 +399,36 @@ function App() {
               </ProtectedRoute>
             }
           />
-
-          {/* My Profile Route - Any authenticated user in admin layout */}
           <Route
             path="profile"
             element={
               <ProtectedRoute fallbackPath="/unauthorized">
                 <div className="p-6">
                   <h1 className="text-2xl font-bold">My Profile</h1>
-                  <p>Profile page coming soon...</p>
                 </div>
               </ProtectedRoute>
             }
           />
         </Route>
       </Routes>
+
+      {/* If background exists, render the modal route on top (matching same path) */}
+      {background && (
+        <Routes>
+          <Route
+            path="/admin/test-results/:orderNumber"
+            element={<TestResultDetailPage />}
+          />
+        </Routes>
+      )}
+    </>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <AppRoutesInner />
     </Router>
   );
 }
