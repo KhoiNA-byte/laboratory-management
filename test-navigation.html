@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Navigation</title>
+</head>
+
+<body>
+    <h1>Test Navigation Links</h1>
+    <p>Click these links to test navigation:</p>
+    <ul>
+        <li><a href="/admin/patients">Patients List</a></li>
+        <li><a href="/admin/patients/MRN-2024-001">Patient Details - John Doe</a></li>
+        <li><a href="/admin/patients/MRN-2024-002">Patient Details - Jane Smith</a></li>
+        <li><a href="/admin/patients/MRN-2024-003">Patient Details - Robert Johnson</a></li>
+    </ul>
+
+    <h2>Expected Behavior:</h2>
+    <ul>
+        <li>First link should show the patients list</li>
+        <li>Other links should show individual patient details</li>
+        <li>If a patient ID doesn't exist, should show "Patient Not Found" message</li>
+    </ul>
+</body>
+
+</html>

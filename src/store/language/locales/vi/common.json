@@ -1,0 +1,439 @@
+{
+  "welcome": "Chào mừng",
+  "login": "Đăng nhập",
+  "logout": "Đăng xuất",
+  "profile": "Hồ sơ",
+  "settings": "Cài đặt",
+  "dashboard": "Bảng điều khiển",
+  "users": "Người dùng",
+  "roles": "Vai trò",
+  "history": "Lịch sử",
+  "pages": {
+    "dashboard": {
+      "title": "Bảng điều khiển",
+      "subtitle": "Tổng quan hoạt động và thống kê phòng thí nghiệm"
+    },
+    "users": {
+      "title": "Quản lý người dùng",
+      "subtitle": "Quản lý tài khoản và quyền truy cập"
+    },
+    "roles": {
+      "title": "Quản lý vai trò",
+      "subtitle": "Định nghĩa và phân quyền người dùng"
+    },
+    "patients": {
+      "title": "Hồ sơ bệnh nhân",
+      "subtitle": "Quản lý thông tin và lịch sử bệnh nhân"
+    },
+    "testOrders": {
+      "title": "Đơn xét nghiệm",
+      "subtitle": "Tạo và theo dõi các đơn xét nghiệm"
+    },
+    "newTestOrder": {
+      "title": "Đơn xét nghiệm mới",
+      "subtitle": "Tạo đơn xét nghiệm trong phòng thí nghiệm"
+    },
+    "myTestResults": {
+      "title": "Kết quả xét nghiệm của tôi",
+      "subtitle": "Xem kết quả xét nghiệm của bạn"
+    },
+    "instruments": {
+      "title": "Thiết bị",
+      "subtitle": "Quản lý thiết bị và dụng cụ xét nghiệm"
+    },
+    "warehouse": {
+      "title": "Kho vật tư",
+      "subtitle": "Quản lý hóa chất và vật tư phòng thí nghiệm"
+    },
+    "monitoring": {
+      "title": "Giám sát hệ thống",
+      "subtitle": "Theo dõi hiệu suất và nhật ký sự kiện"
+    },
+    "reports": {
+      "title": "Báo cáo",
+      "subtitle": "Tạo và xuất các báo cáo xét nghiệm"
+    },
+    "profile": {
+      "title": "Hồ sơ cá nhân",
+      "subtitle": "Xem và cập nhật thông tin của bạn"
+    },
+    "settings": {
+      "title": "Cài đặt",
+      "subtitle": "Thiết lập các tùy chọn hệ thống"
+    },
+    "auditLogs": {
+      "title": "Nhật ký kiểm tra",
+      "subtitle": "Xem các nhật ký hoạt động và bảo mật"
+    },
+    "flaggingRules": {
+      "title": "Quy tắc cảnh báo",
+      "subtitle": "Thiết lập quy tắc cảnh báo thiết bị"
+    }
+  },
+  "dashboardPage": {
+    "title": "Bảng điều khiển",
+    "subtitle": "Tổng quan hoạt động và thống kê phòng thí nghiệm",
+    "stats": {
+      "totalPatients": {
+        "label": "Tổng bệnh nhân",
+        "change": "+12,5% so với tháng trước"
+      },
+      "pendingTests": {
+        "label": "Xét nghiệm đang chờ",
+        "change": "+3 so với hôm qua"
+      },
+      "activeInstruments": {
+        "label": "Thiết bị đang hoạt động",
+        "change": "3 thiết bị đang bảo trì"
+      },
+      "alerts": {
+        "label": "Cảnh báo",
+        "change": "2 nghiêm trọng, 3 cảnh báo"
+      }
+    },
+    "recentOrders": {
+      "title": "Đơn xét nghiệm gần đây",
+      "subtitle": "Các đơn xét nghiệm cần chú ý gần đây",
+      "statuses": {
+        "pending": "Đang chờ",
+        "inProgress": "Đang xử lý",
+        "completed": "Hoàn tất"
+      },
+      "items": [
+        {
+          "name": "John Doe",
+          "test": "Công thức máu toàn phần",
+          "status": "pending",
+          "time": "10 phút trước"
+        },
+        {
+          "name": "Jane Smith",
+          "test": "Bảng mỡ máu",
+          "status": "inProgress",
+          "time": "25 phút trước"
+        },
+        {
+          "name": "Bob Johnson",
+          "test": "Xét nghiệm chức năng gan",
+          "status": "inProgress",
+          "time": "1 giờ trước"
+        },
+        {
+          "name": "Alice Williams",
+          "test": "Xét nghiệm tuyến giáp",
+          "status": "completed",
+          "time": "2 giờ trước"
+        }
+      ]
+    },
+    "systemAlerts": {
+      "title": "Cảnh báo hệ thống",
+      "subtitle": "Thông báo và cảnh báo quan trọng",
+      "items": [
+        {
+          "title": "Tồn kho thuốc thử thấp",
+          "description": "Bộ kit CBC dưới 20%",
+          "time": "5 phút trước",
+          "type": "critical"
+        },
+        {
+          "title": "Đến hạn hiệu chuẩn",
+          "description": "Máy xét nghiệm huyết học cần hiệu chuẩn",
+          "time": "1 giờ trước",
+          "type": "warning"
+        },
+        {
+          "title": "Bảo trì thiết bị",
+          "description": "Máy phân tích hóa học lên lịch bảo trì",
+          "time": "2 giờ trước",
+          "type": "info"
+        },
+        {
+          "title": "Cảnh báo kiểm soát chất lượng",
+          "description": "Kết quả QC vượt ngưỡng đối với xét nghiệm Glucose",
+          "time": "3 giờ trước",
+          "type": "warning"
+        }
+      ]
+    }
+  },
+  "usersPage": {
+    "summaryCards": {
+      "totalUsers": "Tổng người dùng",
+      "activeRecords": "Bản ghi đang hoạt động",
+      "newThisMonth": "Mới trong tháng này",
+      "growthFromLastMonth": "+{{percentage}}% so với tháng trước"
+    },
+    "allUsers": {
+      "title": "Tất cả người dùng",
+      "subtitle": "Xem và quản lý tất cả người dùng hệ thống"
+    },
+    "filters": {
+      "allGenders": "Tất cả giới tính",
+      "male": "Nam",
+      "female": "Nữ",
+      "allAges": "Tất cả độ tuổi",
+      "allRoles": "Tất cả vai trò",
+      "searchPlaceholder": "Tìm kiếm người dùng...",
+      "newUser": "Người dùng mới"
+    },
+    "table": {
+      "userName": "Tên người dùng",
+      "ageGender": "Tuổi/Giới tính",
+      "contact": "Liên hệ",
+      "role": "Vai trò",
+      "status": "Trạng thái",
+      "actions": "Hành động",
+      "years": "tuổi",
+      "active": "Hoạt động",
+      "inactive": "Không hoạt động",
+      "viewProfile": "Xem hồ sơ",
+      "editUser": "Chỉnh sửa người dùng",
+      "deactivateUser": "Vô hiệu hóa người dùng",
+      "activateUser": "Kích hoạt người dùng",
+      "noUsersFound": "Không tìm thấy người dùng",
+      "noUsersMatch": "Không có người dùng phù hợp với bộ lọc",
+      "tryAdjusting": "Thử điều chỉnh tìm kiếm hoặc bộ lọc",
+      "showing": "Hiển thị {{count}} trong {{total}} người dùng"
+    },
+    "confirm": {
+      "deactivateUser": "Bạn có chắc chắn muốn vô hiệu hóa người dùng {{name}}?",
+      "activateUser": "Bạn có chắc chắn muốn kích hoạt người dùng {{name}}?"
+    }
+  },
+  "patientsPage": {
+    "summaryCards": {
+      "totalPatients": "Tổng bệnh nhân",
+      "activeRecords": "Bản ghi đang hoạt động",
+      "newThisMonth": "Mới trong tháng này",
+      "growthFromLastMonth": "+8% so với tháng trước",
+      "pendingTests": "Xét nghiệm đang chờ",
+      "awaitingResults": "Đang chờ kết quả",
+      "completedToday": "Hoàn thành hôm nay",
+      "testResults": "Kết quả xét nghiệm"
+    },
+    "allPatients": {
+      "title": "Tất cả bệnh nhân",
+      "subtitle": "Xem và quản lý hồ sơ bệnh nhân"
+    },
+    "search": {
+      "placeholder": "Tìm kiếm theo tên, email hoặc MRN...",
+      "button": "Tìm kiếm",
+      "noResults": "Không tìm thấy kết quả"
+    },
+    "actions": {
+      "addPatient": "Thêm bệnh nhân",
+      "viewDetails": "Xem chi tiết",
+      "editRecord": "Chỉnh sửa hồ sơ",
+      "deletePatient": "Xóa bệnh nhân"
+    },
+    "table": {
+      "mrn": "MRN",
+      "patientName": "Tên bệnh nhân",
+      "ageGender": "Tuổi/Giới tính",
+      "contact": "Liên hệ",
+      "lastVisit": "Lần khám cuối",
+      "actions": "Hành động",
+      "years": "tuổi",
+      "noData": "Không có dữ liệu"
+    },
+    "pagination": {
+      "previous": "Trước",
+      "next": "Tiếp",
+      "page": "Trang {{current}} / {{total}}"
+    }
+  },
+  "testOrdersPage": {
+    "summaryCards": {
+      "pending": "Đang chờ",
+      "awaitingProcessing": "Đang chờ xử lý",
+      "inProgress": "Đang xử lý",
+      "beingProcessed": "Đang được xử lý",
+      "completed": "Hoàn thành",
+      "readyForReview": "Sẵn sàng để xem xét",
+      "reviewed": "Đã xem xét",
+      "finalized": "Đã hoàn tất"
+    },
+    "allOrders": {
+      "title": "Tất cả đơn xét nghiệm",
+      "subtitle": "Xem và quản lý các đơn xét nghiệm."
+    },
+    "tabs": {
+      "allOrders": "Tất cả đơn",
+      "pending": "Đang chờ",
+      "inProgress": "Đang xử lý",
+      "completed": "Hoàn thành",
+      "reviewed": "Đã xem xét"
+    },
+    "actions": {
+      "newOrder": "Đơn mới",
+      "searchPlaceholder": "Tìm kiếm đơn..."
+    },
+    "table": {
+      "orderNumber": "SỐ ĐƠN",
+      "patient": "BỆNH NHÂN",
+      "testType": "LOẠI XÉT NGHIỆM",
+      "priority": "ƯU TIÊN",
+      "status": "TRẠNG THÁI",
+      "ordered": "ĐÃ ĐẶT",
+      "actions": "HÀNH ĐỘNG",
+      "routine": "Thường",
+      "urgent": "Khẩn cấp",
+      "stat": "Cấp cứu"
+    }
+  },
+  "rolesPage": {
+    "systemRoles": {
+      "title": "Vai trò hệ thống",
+      "subtitle": "Định nghĩa vai trò và quyền liên quan"
+    },
+    "filters": {
+      "searchPlaceholder": "Tìm kiếm vai trò...",
+      "allStatus": "Tất cả trạng thái",
+      "active": "Hoạt động",
+      "inactive": "Không hoạt động",
+      "createRole": "Tạo vai trò"
+    },
+    "table": {
+      "roleName": "TÊN VAI TRÒ",
+      "roleCode": "MÃ VAI TRÒ",
+      "description": "MÔ TẢ",
+      "status": "TRẠNG THÁI",
+      "actions": "HÀNH ĐỘNG"
+    },
+    "actions": {
+      "editRole": "Chỉnh sửa vai trò",
+      "deactivateRole": "Vô hiệu hóa vai trò",
+      "activateRole": "Kích hoạt vai trò"
+    }
+  },
+  "testResultsPage": {
+    "summaryCards": {
+      "totalTests": "Tổng xét nghiệm",
+      "allTime": "Tất cả thời gian.",
+      "pendingResults": "Kết quả đang chờ",
+      "inProgress": "Đang xử lý.",
+      "completed": "Hoàn thành",
+      "availableToView": "Có sẵn để xem."
+    },
+    "allResults": {
+      "title": "Kết quả xét nghiệm",
+      "subtitle": "Kết quả và lịch sử xét nghiệm của bạn."
+    },
+    "tabs": {
+      "allResults": "Tất cả kết quả",
+      "inProgress": "Đang xử lý",
+      "completed": "Hoàn thành"
+    },
+    "actions": {
+      "newTest": "Xét nghiệm mới",
+      "searchPlaceholder": "Tìm kiếm kết quả..."
+    },
+    "table": {
+      "testOrderId": "ID ĐƠN XÉT NGHIỆM",
+      "patient": "BỆNH NHÂN",
+      "date": "NGÀY",
+      "tester": "NGƯỜI XÉT NGHIỆM",
+      "status": "TRẠNG THÁI",
+      "actions": "HÀNH ĐỘNG",
+      "view": "Xem",
+      "export": "Xuất",
+      "delete": "Xóa"
+    }
+  },
+  "monitoringPage": {
+    "title": "Giám sát hệ thống",
+    "subtitle": "Số liệu hệ thống thời gian thực và nhật ký sự kiện",
+    "tabs": {
+      "overview": "Tổng quan",
+      "eventLogs": "Nhật ký sự kiện"
+    },
+    "summaryCards": {
+      "activeUsers": "Người dùng hoạt động",
+      "registeredUsers": "Người dùng đã đăng ký",
+      "testsToday": "Xét nghiệm hôm nay",
+      "completedToday": "Hoàn thành hôm nay",
+      "activeInstruments": "Thiết bị hoạt động",
+      "currentlyOperational": "Đang hoạt động"
+    },
+    "recentEvents": {
+      "title": "Sự kiện gần đây",
+      "subtitle": "Sự kiện và hoạt động hệ thống mới nhất",
+      "viewAll": "Xem tất cả →"
+    }
+  },
+  "instrumentsPage": {
+    "summaryCards": {
+      "totalInstruments": "Tổng thiết bị",
+      "active": "Hoạt động",
+      "maintenance": "Bảo trì",
+      "calibrationDue": "Đến hạn hiệu chuẩn"
+    },
+    "allInstruments": {
+      "title": "Tất cả thiết bị",
+      "subtitle": "Xem và quản lý thiết bị phòng thí nghiệm."
+    },
+    "actions": {
+      "syncUp": "Đồng bộ",
+      "addInstrument": "Thêm thiết bị",
+      "searchPlaceholder": "Tìm kiếm thiết bị..."
+    },
+    "status": {
+      "active": "Hoạt động",
+      "maintenance": "Bảo trì",
+      "calibrationDueSoon": "Sắp đến hạn hiệu chuẩn"
+    }
+  },
+  "warehousePage": {
+    "summaryCards": {
+      "total": "Tổng",
+      "lowStock": "Tồn kho thấp",
+      "expiringSoon": "Sắp hết hạn",
+      "expiredOut": "Hết hạn/Hết"
+    },
+    "reagentsInventory": {
+      "title": "Kho thuốc thử",
+      "subtitle": "Quản lý thuốc thử và vật tư phòng thí nghiệm"
+    },
+    "filters": {
+      "allItems": "Tất cả mục",
+      "inStock": "Còn hàng",
+      "lowStock": "Tồn kho thấp",
+      "expired": "Hết hạn",
+      "outOfStock": "Hết hàng",
+      "searchPlaceholder": "Tìm kiếm...",
+      "addReagent": "Thêm thuốc thử"
+    },
+    "table": {
+      "name": "TÊN",
+      "lot": "LÔ",
+      "manufacturer": "NHÀ SẢN XUẤT",
+      "quantity": "SỐ LƯỢNG",
+      "expiry": "HẾT HẠN",
+      "location": "VỊ TRÍ",
+      "action": "HÀNH ĐỘNG"
+    }
+  },
+  "reportsPage": {
+    "generateReport": {
+      "title": "Tạo báo cáo",
+      "subtitle": "Chọn loại báo cáo và khoảng thời gian",
+      "reportType": "Loại báo cáo",
+      "selectReportType": "Chọn loại báo cáo",
+      "fromDate": "Từ ngày",
+      "toDate": "Đến ngày",
+      "datePlaceholder": "dd/mm/yyyy",
+      "exportExcel": "Xuất Excel",
+      "print": "In"
+    },
+    "quickReports": {
+      "title": "Báo cáo nhanh",
+      "subtitle": "Tạo các báo cáo thường dùng",
+      "todaysTestOrders": "Đơn xét nghiệm hôm nay",
+      "pendingTestResults": "Kết quả xét nghiệm đang chờ",
+      "instrumentStatusReport": "Báo cáo trạng thái thiết bị",
+      "lowStockReagents": "Thuốc thử tồn kho thấp",
+      "userActivityLog": "Nhật ký hoạt động người dùng"
+    }
+  }
+}
