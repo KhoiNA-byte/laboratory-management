@@ -9,6 +9,22 @@ interface EditInstrumentPopupProps {
   onSave: (instrument: Instrument) => void;
 }
 
+interface TestType {
+  id: string;
+  name: string;
+}
+
+interface Reagent {
+  id: string;
+  name: string;
+  lot_number: string;
+  manufacturer: string;
+  quantity: number;
+  unit: string;
+  expiry_date: string;
+  location: string;
+}
+
 const EditInstrumentPopup: React.FC<EditInstrumentPopupProps> = ({ 
   instrument, 
   onClose,
@@ -17,6 +33,12 @@ const EditInstrumentPopup: React.FC<EditInstrumentPopupProps> = ({
   const dispatch = useDispatch();
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [testTypes, setTestTypes] = useState<TestType[]>([]);
+  const [reagents, setReagents] = useState<Reagent[]>([]);
+  const [loading, setLoading] = useState({
+    testTypes: false,
+    reagents: false
+  });
   
   const [formData, setFormData] = useState({
     name: "",
@@ -26,6 +48,8 @@ const EditInstrumentPopup: React.FC<EditInstrumentPopupProps> = ({
     status: "Active" as "Active" | "Maintenance" | "Inactive",
     location: "",
     nextCalibration: "",
+    supportedTest: "", // Single selection
+    supportedReagents: [] as string[], // Multiple selection
   });
 
   // Predefined location options
@@ -40,23 +64,76 @@ const EditInstrumentPopup: React.FC<EditInstrumentPopupProps> = ({
     "L-008"
   ];
 
+  // Fetch test types and reagents từ API
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(prev => ({ ...prev, testTypes: true, reagents: true }));
+
+        // Fetch test types
+        const testTypesPromise = fetch('https://69085724b49bea95fbf32f71.mockapi.io/test_type')
+          .then(response => {
+            if (!response.ok) throw new Error(`Test types API error: ${response.status}`);
+            return response.json();
+          });
+
+        // Fetch reagents
+        const reagentsPromise = fetch('https://69085724b49bea95fbf32f71.mockapi.io/reagents')
+          .then(response => {
+            if (!response.ok) throw new Error(`Reagents API error: ${response.status}`);
+            return response.json();
+          });
+
+        const [testTypesResult, reagentsResult] = await Promise.allSettled([
+          testTypesPromise,
+          reagentsPromise
+        ]);
+
+        // Xử lý test types
+        if (testTypesResult.status === 'fulfilled') {
+          setTestTypes(Array.isArray(testTypesResult.value) ? testTypesResult.value : []);
+        } else {
+          console.error('Failed to fetch test types:', testTypesResult.reason);
+          setTestTypes([]);
+        }
+
+        // Xử lý reagents
+        if (reagentsResult.status === 'fulfilled') {
+          setReagents(Array.isArray(reagentsResult.value) ? reagentsResult.value : []);
+        } else {
+          console.error('Failed to fetch reagents:', reagentsResult.reason);
+          setReagents([]);
+        }
+
+      } catch (error) {
+        console.error('Error in fetchData:', error);
+      } finally {
+        setLoading(prev => ({ ...prev, testTypes: false, reagents: false }));
+      }
+    };
+
+    fetchData();
+  }, []);
+
   // Load instrument data when popup opens
   useEffect(() => {
     if (instrument) {
       setFormData({
-        name: instrument.name,
-        model: instrument.model,
-        serialNumber: instrument.serialNumber,
-        manufacturer: instrument.manufacturer,
-        status: instrument.status,
-        location: instrument.location,
-        nextCalibration: instrument.nextCalibration,
+        name: instrument.name || "",
+        model: instrument.model || "",
+        serialNumber: instrument.serialNumber || "",
+        manufacturer: instrument.manufacturer || "",
+        status: instrument.status || "Active",
+        location: instrument.location || "",
+        nextCalibration: instrument.nextCalibration || "",
+        supportedTest: instrument.supportedTest || "",
+        supportedReagents: instrument.supportedReagents || [],
       });
     }
   }, [instrument]);
 
   // Validation functions
-  const validateField = (field: string, value: string): string => {
+  const validateField = (field: string, value: any): string => {
     const specialCharRegex = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/;
     
     switch (field) {
@@ -90,12 +167,20 @@ const EditInstrumentPopup: React.FC<EditInstrumentPopupProps> = ({
         if (new Date(value) <= new Date()) return 'Next calibration must be in the future';
         return '';
       
+      case 'supportedTest':
+        if (!value.trim()) return 'Supported test is required';
+        return '';
+      
+      case 'supportedReagents':
+        if (!value.length) return 'At least one reagent must be selected';
+        return '';
+      
       default:
         return '';
     }
   };
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -108,6 +193,44 @@ const EditInstrumentPopup: React.FC<EditInstrumentPopupProps> = ({
         delete newErrors[field];
         return newErrors;
       });
+    }
+  };
+
+  // Xử lý chọn/bỏ chọn reagent
+  const handleReagentChange = (reagentId: string) => {
+    setFormData(prev => {
+      const currentReagents = prev.supportedReagents;
+      const updatedReagents = currentReagents.includes(reagentId)
+        ? currentReagents.filter(id => id !== reagentId)
+        : [...currentReagents, reagentId];
+      
+      return {
+        ...prev,
+        supportedReagents: updatedReagents
+      };
+    });
+
+    // Clear error nếu có
+    if (errors.supportedReagents) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.supportedReagents;
+        return newErrors;
+      });
+    }
+  };
+
+  // Format date for display
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch (error) {
+      return 'Invalid Date';
     }
   };
 
@@ -146,7 +269,9 @@ const EditInstrumentPopup: React.FC<EditInstrumentPopupProps> = ({
         status: formData.status,
         location: formData.location,
         nextCalibration: formData.nextCalibration,
-        calibrationDue: false
+        supportedTest: formData.supportedTest,
+        supportedReagents: formData.supportedReagents,
+        calibrationDue: instrument.calibrationDue || false
       };
 
       // Dispatch update action
@@ -183,7 +308,7 @@ const EditInstrumentPopup: React.FC<EditInstrumentPopupProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex justify-between items-start p-6 border-b">
           <div>
@@ -202,133 +327,224 @@ const EditInstrumentPopup: React.FC<EditInstrumentPopupProps> = ({
         </div>
 
         {/* Form Content */}
-        <div className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Left Column */}
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Instrument Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    errors.name ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                  required
-                />
-                {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+        <div className="p-6 space-y-6">
+          {/* Section 1: Basic Information */}
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Basic Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Left Column */}
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Instrument Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => handleInputChange('name', e.target.value)}
+                    className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      errors.name ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                    required
+                  />
+                  {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Model <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.model}
+                    onChange={(e) => handleInputChange('model', e.target.value)}
+                    className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      errors.model ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                    required
+                  />
+                  {errors.model && <p className="text-red-500 text-xs mt-1">{errors.model}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Serial Number <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.serialNumber}
+                    onChange={(e) => handleInputChange('serialNumber', e.target.value)}
+                    className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      errors.serialNumber ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                    required
+                  />
+                  {errors.serialNumber && <p className="text-red-500 text-xs mt-1">{errors.serialNumber}</p>}
+                </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Model <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={formData.model}
-                  onChange={(e) => handleInputChange('model', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    errors.model ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                  required
-                />
-                {errors.model && <p className="text-red-500 text-xs mt-1">{errors.model}</p>}
-              </div>
+              {/* Right Column */}
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Manufacturer <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.manufacturer}
+                    onChange={(e) => handleInputChange('manufacturer', e.target.value)}
+                    className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      errors.manufacturer ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                    required
+                  />
+                  {errors.manufacturer && <p className="text-red-500 text-xs mt-1">{errors.manufacturer}</p>}
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Serial Number <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={formData.serialNumber}
-                  onChange={(e) => handleInputChange('serialNumber', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    errors.serialNumber ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                  required
-                />
-                {errors.serialNumber && <p className="text-red-500 text-xs mt-1">{errors.serialNumber}</p>}
-              </div>
-            </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Status <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={formData.status}
+                    onChange={(e) => handleInputChange('status', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="Active">Active</option>
+                    <option value="Maintenance">Maintenance</option>
+                    <option value="Inactive">Inactive</option>
+                  </select>
+                </div>
 
-            {/* Right Column */}
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Manufacturer <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={formData.manufacturer}
-                  onChange={(e) => handleInputChange('manufacturer', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    errors.manufacturer ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                  required
-                />
-                {errors.manufacturer && <p className="text-red-500 text-xs mt-1">{errors.manufacturer}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Status <span className="text-red-500">*</span>
-                </label>
-                <select
-                  value={formData.status}
-                  onChange={(e) => handleInputChange('status', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="Active">Active</option>
-                  <option value="Maintenance">Maintenance</option>
-                  <option value="Inactive">Inactive</option>
-                </select>
-              </div>
-
-              {/* FIXED: Location as dropdown */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Location <span className="text-red-500">*</span>
-                </label>
-                <select
-                  value={formData.location}
-                  onChange={(e) => handleInputChange('location', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    errors.location ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                  required
-                >
-                  <option value="">Select a location</option>
-                  {locationOptions.map((location) => (
-                    <option key={location} value={location}>
-                      {location}
-                    </option>
-                  ))}
-                </select>
-                {errors.location && <p className="text-red-500 text-xs mt-1">{errors.location}</p>}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Location <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={formData.location}
+                    onChange={(e) => handleInputChange('location', e.target.value)}
+                    className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      errors.location ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                    required
+                  >
+                    <option value="">Select a location</option>
+                    {locationOptions.map((location) => (
+                      <option key={location} value={location}>
+                        {location}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.location && <p className="text-red-500 text-xs mt-1">{errors.location}</p>}
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Next Calibration - Full width */}
-          <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Next Calibration <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="date"
-              value={formData.nextCalibration}
-              onChange={(e) => handleInputChange('nextCalibration', e.target.value)}
-              min={getMinCalibrationDate()}
-              className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                errors.nextCalibration ? 'border-red-500' : 'border-gray-300'
-              }`}
-              required
-            />
-            {errors.nextCalibration && <p className="text-red-500 text-xs mt-1">{errors.nextCalibration}</p>}
+          {/* Section 2: Calibration Information */}
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Calibration Information</h3>
+            <div className="max-w-md">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Next Calibration Date <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="date"
+                  value={formData.nextCalibration}
+                  onChange={(e) => handleInputChange('nextCalibration', e.target.value)}
+                  min={getMinCalibrationDate()}
+                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    errors.nextCalibration ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  required
+                />
+                {errors.nextCalibration && <p className="text-red-500 text-xs mt-1">{errors.nextCalibration}</p>}
+              </div>
+            </div>
+          </div>
+
+          {/* Section 3: Testing Configuration */}
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Testing Configuration</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Supported Test Type */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Supported Test Type <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={formData.supportedTest}
+                  onChange={(e) => handleInputChange('supportedTest', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    errors.supportedTest ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  required
+                  disabled={loading.testTypes}
+                >
+                  <option value="">Select a test type</option>
+                  {testTypes.map((testType) => (
+                    <option key={testType.id} value={testType.id}>
+                      {testType.id} - {testType.name}
+                    </option>
+                  ))}
+                </select>
+                {loading.testTypes && <p className="text-blue-500 text-xs mt-1">Loading test types...</p>}
+                {errors.supportedTest && <p className="text-red-500 text-xs mt-1">{errors.supportedTest}</p>}
+              </div>
+
+              {/* Supported Reagents */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Supported Reagents <span className="text-red-500">*</span>
+                </label>
+                <div className={`max-h-48 overflow-y-auto border rounded-md p-3 ${
+                  errors.supportedReagents ? 'border-red-500' : 'border-gray-300'
+                } ${loading.reagents ? 'opacity-50' : ''}`}>
+                  {loading.reagents ? (
+                    <p className="text-gray-500 text-sm">Loading reagents...</p>
+                  ) : reagents.length === 0 ? (
+                    <p className="text-gray-500 text-sm">No reagents available</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {reagents.map((reagent) => (
+                        <label key={reagent.id} className="flex items-start space-x-3 p-2 hover:bg-gray-50 rounded-lg border border-gray-200">
+                          <input
+                            type="checkbox"
+                            checked={formData.supportedReagents.includes(reagent.id)}
+                            onChange={() => handleReagentChange(reagent.id)}
+                            className="mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            disabled={loading.reagents}
+                          />
+                          <div className="flex-1">
+                            <div className="flex justify-between items-start">
+                              <span className="font-medium text-sm">{reagent.name}</span>
+                              <span className={`text-xs px-2 py-1 rounded-full ${
+                                reagent.quantity > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                              }`}>
+                                {reagent.quantity} {reagent.unit}
+                              </span>
+                            </div>
+                            <div className="text-xs text-gray-600 mt-1 space-y-1">
+                              <div>Lot: {reagent.lot_number} • Mfg: {reagent.manufacturer}</div>
+                              <div>Expires: {formatDate(reagent.expiry_date)} • Storage: {reagent.location}</div>
+                            </div>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {errors.supportedReagents && (
+                  <p className="text-red-500 text-xs mt-1">{errors.supportedReagents}</p>
+                )}
+                {formData.supportedReagents.length > 0 && (
+                  <p className="text-green-600 text-xs mt-1">
+                    {formData.supportedReagents.length} reagent(s) selected
+                  </p>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -343,13 +559,16 @@ const EditInstrumentPopup: React.FC<EditInstrumentPopupProps> = ({
           </button>
           <button
             onClick={handleSave}
-            disabled={saving}
+            disabled={saving || loading.testTypes || loading.reagents}
             className="px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center space-x-2"
           >
             {saving && (
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
             )}
-            <span>{saving ? 'Saving...' : 'Save Changes'}</span>
+            <span>
+              {saving ? 'Saving...' : 
+               loading.testTypes || loading.reagents ? 'Loading Data...' : 'Save Changes'}
+            </span>
           </button>
         </div>
       </div>
