@@ -1,6 +1,8 @@
 // modules/iam/RolesPage.tsx
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
+
+import { useTranslation } from "react-i18next";
 import { RootState } from "../../store";
 import {
   clearMessages,
@@ -13,6 +15,8 @@ import UpdateRoleModal from "../../components/RolesPage/UpdateRoleModal";
 import RolesHeader from "../../components/RolesPage/RolesHeader";
 
 export const RolesPage = () => {
+
+  const { t } = useTranslation("common");
   const {
     roles,
     loading,
@@ -311,9 +315,10 @@ export const RolesPage = () => {
 
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Roles Management
+
+          {t("pages.roles.title")}
         </h1>
-        <p className="text-gray-600">Manage user roles and permissions</p>
+        <p className="text-gray-600">{t("pages.roles.subtitle")}</p>
       </div>
 
       {/* All Roles Section */}
@@ -334,19 +339,20 @@ export const RolesPage = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6">
-                  Role Name
+
+                  {t("rolesPage.table.roleName")}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6">
-                  Role Code
+                  {t("rolesPage.table.roleCode")}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6">
-                  Description
+                  {t("rolesPage.table.description")}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6">
-                  Status
+                  {t("rolesPage.table.status")}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6">
-                  Actions
+                  {t("rolesPage.table.actions")}
                 </th>
               </tr>
             </thead>
@@ -388,7 +394,8 @@ export const RolesPage = () => {
                           role.status || "active"
                         )}`}
                       >
-                        {role.status === "active" ? "Active" : "Inactive"}
+
+                        {role.status === "active" ? t("rolesPage.filters.active") : t("rolesPage.filters.inactive")}
                       </span>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm font-medium relative sm:px-6">
@@ -429,8 +436,9 @@ export const RolesPage = () => {
                                     d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                                   />
                                 </svg>
-                                Edit Role
-                              </button>
+
+                                {t("rolesPage.actions.editRole")}
+\                              </button>
 
                               <button
                                 onClick={() =>
@@ -465,8 +473,9 @@ export const RolesPage = () => {
                                   )}
                                 </svg>
                                 {role.status === "active"
-                                  ? "Deactivate Role"
-                                  : "Activate Role"}
+
+                                  ? t("rolesPage.actions.deactivateRole")
+                                  : t("rolesPage.actions.activateRole")}
                               </button>
 
                               <button

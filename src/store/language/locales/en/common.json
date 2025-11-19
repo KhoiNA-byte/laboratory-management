@@ -1,11 +1,439 @@
 {
-    "welcome": "Welcome",
-    "login": "Login",
-    "logout": "Logout",
-    "profile": "Profile",
-    "settings": "Settings",
-    "dashboard": "Dashboard",
-    "users": "Users",
-    "roles": "Roles",
-    "history": "History"
+  "welcome": "Welcome",
+  "login": "Login",
+  "logout": "Logout",
+  "profile": "Profile",
+  "settings": "Settings",
+  "dashboard": "Dashboard",
+  "users": "Users",
+  "roles": "Roles",
+  "history": "History",
+  "pages": {
+    "dashboard": {
+      "title": "Dashboard",
+      "subtitle": "Overview of laboratory operations and statistics"
+    },
+    "users": {
+      "title": "Users Management",
+      "subtitle": "Manage system users and access permissions"
+    },
+    "roles": {
+      "title": "Roles Management",
+      "subtitle": "Define and assign user roles"
+    },
+    "patients": {
+      "title": "Patient Records",
+      "subtitle": "Manage patient information and clinical history"
+    },
+    "testOrders": {
+      "title": "Test Orders",
+      "subtitle": "Create and track laboratory test orders"
+    },
+    "newTestOrder": {
+      "title": "New Test Order",
+      "subtitle": "Create a new laboratory test order"
+    },
+    "myTestResults": {
+      "title": "My Test Results",
+      "subtitle": "View your laboratory test results"
+    },
+    "instruments": {
+      "title": "Instruments",
+      "subtitle": "Manage laboratory instruments and equipment"
+    },
+    "warehouse": {
+      "title": "Warehouse",
+      "subtitle": "Manage reagents and laboratory inventory"
+    },
+    "monitoring": {
+      "title": "System Monitoring",
+      "subtitle": "Monitor system health and event logs"
+    },
+    "reports": {
+      "title": "Reports",
+      "subtitle": "Generate and export laboratory reports"
+    },
+    "profile": {
+      "title": "Profile",
+      "subtitle": "View and manage your profile information"
+    },
+    "settings": {
+      "title": "Settings",
+      "subtitle": "Configure system preferences"
+    },
+    "auditLogs": {
+      "title": "Audit Logs",
+      "subtitle": "Review security and activity logs"
+    },
+    "flaggingRules": {
+      "title": "Flagging Rules",
+      "subtitle": "Configure instrument flagging rules"
+    }
+  },
+  "dashboardPage": {
+    "title": "Dashboard",
+    "subtitle": "Overview of laboratory operations and statistics",
+    "stats": {
+      "totalPatients": {
+        "label": "Total Patients",
+        "change": "+12.5% from last month"
+      },
+      "pendingTests": {
+        "label": "Pending Tests",
+        "change": "+3 from yesterday"
+      },
+      "activeInstruments": {
+        "label": "Active Instruments",
+        "change": "3 under maintenance"
+      },
+      "alerts": {
+        "label": "Alerts",
+        "change": "2 critical, 3 warnings"
+      }
+    },
+    "recentOrders": {
+      "title": "Recent Test Orders",
+      "subtitle": "Latest test orders requiring attention",
+      "statuses": {
+        "pending": "Pending",
+        "inProgress": "In Progress",
+        "completed": "Completed"
+      },
+      "items": [
+        {
+          "name": "John Doe",
+          "test": "Complete Blood Count",
+          "status": "pending",
+          "time": "10 minutes ago"
+        },
+        {
+          "name": "Jane Smith",
+          "test": "Lipid Panel",
+          "status": "inProgress",
+          "time": "25 minutes ago"
+        },
+        {
+          "name": "Bob Johnson",
+          "test": "Liver Function Test",
+          "status": "inProgress",
+          "time": "1 hour ago"
+        },
+        {
+          "name": "Alice Williams",
+          "test": "Thyroid Panel",
+          "status": "completed",
+          "time": "2 hours ago"
+        }
+      ]
+    },
+    "systemAlerts": {
+      "title": "System Alerts",
+      "subtitle": "Important notifications and warnings",
+      "items": [
+        {
+          "title": "Low Reagent Stock",
+          "description": "CBC Reagent Kit below 20%",
+          "time": "5 min ago",
+          "type": "critical"
+        },
+        {
+          "title": "Calibration Due",
+          "description": "Hematology Analyzer needs calibration",
+          "time": "1 hour ago",
+          "type": "warning"
+        },
+        {
+          "title": "Instrument Maintenance",
+          "description": "Chemistry Analyzer scheduled maintenance",
+          "time": "2 hours ago",
+          "type": "info"
+        },
+        {
+          "title": "Quality Control Alert",
+          "description": "QC results out of range for Glucose test",
+          "time": "3 hours ago",
+          "type": "warning"
+        }
+      ]
+    }
+  },
+  "usersPage": {
+    "summaryCards": {
+      "totalUsers": "Total Users",
+      "activeRecords": "Active records",
+      "newThisMonth": "New This Month",
+      "growthFromLastMonth": "+{{percentage}}% from last month"
+    },
+    "allUsers": {
+      "title": "All Users",
+      "subtitle": "View and manage all system users"
+    },
+    "filters": {
+      "allGenders": "All Genders",
+      "male": "Male",
+      "female": "Female",
+      "allAges": "All Ages",
+      "allRoles": "All Roles",
+      "searchPlaceholder": "Search users...",
+      "newUser": "New User"
+    },
+    "table": {
+      "userName": "User Name",
+      "ageGender": "Age/Gender",
+      "contact": "Contact",
+      "role": "Role",
+      "status": "Status",
+      "actions": "Actions",
+      "years": "years",
+      "active": "Active",
+      "inactive": "Inactive",
+      "viewProfile": "View Profile",
+      "editUser": "Edit User",
+      "deactivateUser": "Deactivate User",
+      "activateUser": "Activate User",
+      "noUsersFound": "No users found",
+      "noUsersMatch": "No users match your filters",
+      "tryAdjusting": "Try adjusting your search or filters",
+      "showing": "Showing {{count}} of {{total}} users"
+    },
+    "confirm": {
+      "deactivateUser": "Are you sure you want to deactivate user {{name}}?",
+      "activateUser": "Are you sure you want to activate user {{name}}?"
+    }
+  },
+  "patientsPage": {
+    "summaryCards": {
+      "totalPatients": "Total Patients",
+      "activeRecords": "Active records",
+      "newThisMonth": "New This Month",
+      "growthFromLastMonth": "+8% from last month",
+      "pendingTests": "Pending Tests",
+      "awaitingResults": "Awaiting results",
+      "completedToday": "Completed Today",
+      "testResults": "Test results"
+    },
+    "allPatients": {
+      "title": "All Patients",
+      "subtitle": "View and manage patient medical records"
+    },
+    "search": {
+      "placeholder": "Search by name, email, or MRN...",
+      "button": "Search",
+      "noResults": "No results found"
+    },
+    "actions": {
+      "addPatient": "Add Patient",
+      "viewDetails": "View Details",
+      "editRecord": "Edit Record",
+      "deletePatient": "Delete Patient"
+    },
+    "table": {
+      "mrn": "MRN",
+      "patientName": "Patient Name",
+      "ageGender": "Age/Gender",
+      "contact": "Contact",
+      "lastVisit": "Last Visit",
+      "actions": "Actions",
+      "years": "years",
+      "noData": "No data"
+    },
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next",
+      "page": "Page {{current}} of {{total}}"
+    }
+  },
+  "testOrdersPage": {
+    "summaryCards": {
+      "pending": "Pending",
+      "awaitingProcessing": "Awaiting processing",
+      "inProgress": "In Progress",
+      "beingProcessed": "Being processed",
+      "completed": "Completed",
+      "readyForReview": "Ready for review",
+      "reviewed": "Reviewed",
+      "finalized": "Finalized"
+    },
+    "allOrders": {
+      "title": "All Test Orders",
+      "subtitle": "View and manage laboratory test orders."
+    },
+    "tabs": {
+      "allOrders": "All Orders",
+      "pending": "Pending",
+      "inProgress": "In Progress",
+      "completed": "Completed",
+      "reviewed": "Reviewed"
+    },
+    "actions": {
+      "newOrder": "New Order",
+      "searchPlaceholder": "Search orders..."
+    },
+    "table": {
+      "orderNumber": "ORDER NUMBER",
+      "patient": "PATIENT",
+      "testType": "TEST TYPE",
+      "priority": "PRIORITY",
+      "status": "STATUS",
+      "ordered": "ORDERED",
+      "actions": "ACTIONS",
+      "routine": "Routine",
+      "urgent": "Urgent",
+      "stat": "Stat"
+    }
+  },
+  "rolesPage": {
+    "systemRoles": {
+      "title": "System Roles",
+      "subtitle": "Define roles and their associated permissions"
+    },
+    "filters": {
+      "searchPlaceholder": "Search roles...",
+      "allStatus": "All Status",
+      "active": "Active",
+      "inactive": "Inactive",
+      "createRole": "Create Role"
+    },
+    "table": {
+      "roleName": "ROLE NAME",
+      "roleCode": "ROLE CODE",
+      "description": "DESCRIPTION",
+      "status": "STATUS",
+      "actions": "ACTIONS"
+    },
+    "actions": {
+      "editRole": "Edit Role",
+      "deactivateRole": "Deactivate Role",
+      "activateRole": "Activate Role"
+    }
+  },
+  "testResultsPage": {
+    "summaryCards": {
+      "totalTests": "Total Tests",
+      "allTime": "All time.",
+      "pendingResults": "Pending Results",
+      "inProgress": "In progress.",
+      "completed": "Completed",
+      "availableToView": "Available to view."
+    },
+    "allResults": {
+      "title": "Test Results",
+      "subtitle": "Your laboratory test results and history."
+    },
+    "tabs": {
+      "allResults": "All Results",
+      "inProgress": "In Progress",
+      "completed": "Completed"
+    },
+    "actions": {
+      "newTest": "New Test",
+      "searchPlaceholder": "Search results..."
+    },
+    "table": {
+      "testOrderId": "TESTORDER ID",
+      "patient": "PATIENT",
+      "date": "DATE",
+      "tester": "TESTER",
+      "status": "STATUS",
+      "actions": "ACTIONS",
+      "view": "View",
+      "export": "Export",
+      "delete": "Delete"
+    }
+  },
+  "monitoringPage": {
+    "title": "System Monitoring",
+    "subtitle": "Real-time system metrics and event logs",
+    "tabs": {
+      "overview": "Overview",
+      "eventLogs": "Event Logs"
+    },
+    "summaryCards": {
+      "activeUsers": "Active Users",
+      "registeredUsers": "Registered users",
+      "testsToday": "Tests Today",
+      "completedToday": "Completed today",
+      "activeInstruments": "Active Instruments",
+      "currentlyOperational": "Currently operational"
+    },
+    "recentEvents": {
+      "title": "Recent Events",
+      "subtitle": "Latest system events and activities",
+      "viewAll": "View All →"
+    }
+  },
+  "instrumentsPage": {
+    "summaryCards": {
+      "totalInstruments": "Total Instruments",
+      "active": "Active",
+      "maintenance": "Maintenance",
+      "calibrationDue": "Calibration Due"
+    },
+    "allInstruments": {
+      "title": "All Instruments",
+      "subtitle": "View and manage laboratory equipment."
+    },
+    "actions": {
+      "syncUp": "Sync-up",
+      "addInstrument": "Add Instrument",
+      "searchPlaceholder": "Search instruments..."
+    },
+    "status": {
+      "active": "Active",
+      "maintenance": "Maintenance",
+      "calibrationDueSoon": "Calibration due soon"
+    }
+  },
+  "warehousePage": {
+    "summaryCards": {
+      "total": "Total",
+      "lowStock": "Low stock",
+      "expiringSoon": "Expiring soon",
+      "expiredOut": "Expired/Out"
+    },
+    "reagentsInventory": {
+      "title": "Reagents Inventory",
+      "subtitle": "Manage laboratory reagents and supplies"
+    },
+    "filters": {
+      "allItems": "All Items",
+      "inStock": "In Stock",
+      "lowStock": "Low Stock",
+      "expired": "Expired",
+      "outOfStock": "Out of Stock",
+      "searchPlaceholder": "Search...",
+      "addReagent": "Add Reagent"
+    },
+    "table": {
+      "name": "NAME",
+      "lot": "LOT",
+      "manufacturer": "MANUFACTURER",
+      "quantity": "QUANTITY",
+      "expiry": "EXPIRY",
+      "location": "LOCATION",
+      "action": "ACTION"
+    }
+  },
+  "reportsPage": {
+    "generateReport": {
+      "title": "Generate Report",
+      "subtitle": "Select report type and date range",
+      "reportType": "Report Type",
+      "selectReportType": "Select report type",
+      "fromDate": "From Date",
+      "toDate": "To Date",
+      "datePlaceholder": "dd/mm/yyyy",
+      "exportExcel": "Export Excel",
+      "print": "Print"
+    },
+    "quickReports": {
+      "title": "Quick Reports",
+      "subtitle": "Generate commonly used reports",
+      "todaysTestOrders": "Today's Test Orders",
+      "pendingTestResults": "Pending Test Results",
+      "instrumentStatusReport": "Instrument Status Report",
+      "lowStockReagents": "Low Stock Reagents",
+      "userActivityLog": "User Activity Log"
+    }
   }
+}

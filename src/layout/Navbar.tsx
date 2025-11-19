@@ -2,62 +2,109 @@
 import React from "react";
 import { useDispatch } from "react-redux";
 import { useLocation } from "react-router-dom";
+
+import { useTranslation } from "react-i18next";
 import { logoutRequest } from "../store/slices/authSlice";
 import { MagnifyingGlassIcon, BellIcon } from "@heroicons/react/24/outline";
 
-const ROUTE_META: Record<string, { title: string; subtitle: string }> = {
+type RouteMeta = {
+  titleKey: string;
+  subtitleKey: string;
+  fallbackTitle: string;
+  fallbackSubtitle: string;
+};
+
+const ROUTE_META: Record<string, RouteMeta> = {
+  "/admin/dashboard": {
+    titleKey: "pages.dashboard.title",
+    subtitleKey: "pages.dashboard.subtitle",
+    fallbackTitle: "Dashboard",
+    fallbackSubtitle: "Overview of laboratory operations and statistics",
+  },
   "/admin/my-test-results": {
-    title: "Test Results",
-    subtitle: "Your laboratory test history and results",
+    titleKey: "pages.myTestResults.title",
+    subtitleKey: "pages.myTestResults.subtitle",
+    fallbackTitle: "Test Results",
+    fallbackSubtitle: "Your laboratory test history and results",
   },
   "/admin/test-orders": {
-    title: "Test Orders",
-    subtitle: "Manage laboratory test orders",
-  },
-  "/admin/roles": {
-    title: "Roles Management",
-    subtitle: "Manage user roles and permissions",
+    titleKey: "pages.testOrders.title",
+    subtitleKey: "pages.testOrders.subtitle",
+    fallbackTitle: "Test Orders",
+    fallbackSubtitle: "Manage laboratory test orders",
   },
   "/admin/test-orders/new": {
-    title: "New Test Order",
-    subtitle: "Create a new test order",
-  },
-  "/admin/dashboard": {
-    title: "Dashboard",
-    subtitle: "Overview of laboratory operations and statistics",
+    titleKey: "pages.newTestOrder.title",
+    subtitleKey: "pages.newTestOrder.subtitle",
+    fallbackTitle: "New Test Order",
+    fallbackSubtitle: "Create a new test order",
   },
   "/admin/users": {
-    title: "Users Management",
-    subtitle: "Manage system users and their access permissions",
+    titleKey: "pages.users.title",
+    subtitleKey: "pages.users.subtitle",
+    fallbackTitle: "Users Management",
+    fallbackSubtitle: "Manage system users and their access permissions",
   },
-   "/admin/patients": {
-    title: "Patient Records",
-    subtitle: "Manage patient medical records and information",
+  "/admin/roles": {
+    titleKey: "pages.roles.title",
+    subtitleKey: "pages.roles.subtitle",
+    fallbackTitle: "Roles Management",
+    fallbackSubtitle: "Manage user roles and permissions",
   },
-   "/admin/instruments": {
-    title: "Instruments",
-    subtitle: "Manage laboratory instruments and equipment",
+  "/admin/patients": {
+    titleKey: "pages.patients.title",
+    subtitleKey: "pages.patients.subtitle",
+    fallbackTitle: "Patient Records",
+    fallbackSubtitle: "Manage patient medical records and information",
   },
-   "/admin/warehouse": {
-    title: "Warehouse",
-    subtitle: "Manage reagents and laboratory supplies",
+  "/admin/instruments": {
+    titleKey: "pages.instruments.title",
+    subtitleKey: "pages.instruments.subtitle",
+    fallbackTitle: "Instruments",
+    fallbackSubtitle: "Manage laboratory instruments and equipment",
   },
-   "/admin/monitoring": {
-    title: "System Monitoring",
-    subtitle: "Monitor system health, event logs, and performance metrics",
+  "/admin/warehouse": {
+    titleKey: "pages.warehouse.title",
+    subtitleKey: "pages.warehouse.subtitle",
+    fallbackTitle: "Warehouse",
+    fallbackSubtitle: "Manage reagents and laboratory supplies",
   },
-   "/admin/reports": {
-    title: "Reports",
-    subtitle: "Generate and export laboratory reports",
+  "/admin/monitoring": {
+    titleKey: "pages.monitoring.title",
+    subtitleKey: "pages.monitoring.subtitle",
+    fallbackTitle: "System Monitoring",
+    fallbackSubtitle: "Monitor system health, event logs, and performance metrics",
   },
-   "/admin/profile": {
-    title: "Profile",
-    subtitle: "View and manage information",
+  "/admin/reports": {
+    titleKey: "pages.reports.title",
+    subtitleKey: "pages.reports.subtitle",
+    fallbackTitle: "Reports",
+    fallbackSubtitle: "Generate and export laboratory reports",
   },
-   "/admin/settings": {
-    title: "Settings",
-    subtitle: "Manage settings and configurations",
-  }
+  "/admin/profile": {
+    titleKey: "pages.profile.title",
+    subtitleKey: "pages.profile.subtitle",
+    fallbackTitle: "Profile",
+    fallbackSubtitle: "View and manage information",
+  },
+  "/admin/settings": {
+    titleKey: "pages.settings.title",
+    subtitleKey: "pages.settings.subtitle",
+    fallbackTitle: "Settings",
+    fallbackSubtitle: "Manage settings and configurations",
+  },
+  "/admin/audit-logs": {
+    titleKey: "pages.auditLogs.title",
+    subtitleKey: "pages.auditLogs.subtitle",
+    fallbackTitle: "Audit Logs",
+    fallbackSubtitle: "Review security and activity logs",
+  },
+  "/admin/flagging-rules": {
+    titleKey: "pages.flaggingRules.title",
+    subtitleKey: "pages.flaggingRules.subtitle",
+    fallbackTitle: "Flagging Rules",
+    fallbackSubtitle: "Configure instrument flagging rules",
+  },
 };
 
 export interface NavbarProps {
@@ -71,10 +118,16 @@ export const Navbar = ({
 }: NavbarProps) => {
   const dispatch = useDispatch();
   const location = useLocation();
-  const meta = ROUTE_META[location.pathname] || {};
 
-  const title = propTitle ?? meta.title ?? "Default Title";
-  const subtitle = propSubtitle ?? meta.subtitle ?? "";
+  const { t } = useTranslation("common");
+  const meta = ROUTE_META[location.pathname];
+
+  const title =
+    propTitle ??
+    (meta ? t(meta.titleKey, { defaultValue: meta.fallbackTitle }) : "Default Title");
+  const subtitle =
+    propSubtitle ??
+    (meta ? t(meta.subtitleKey, { defaultValue: meta.fallbackSubtitle }) : "");
 
   const handleLogout = () => dispatch(logoutRequest());
 

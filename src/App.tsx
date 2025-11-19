@@ -9,6 +9,7 @@ import {
 import { AppLayout } from "./layout/AppLayout";
 import { ProtectedRoute } from "./auth/ProtectedRoute";
 import { PERMISSIONS } from "./constants/permissions";
+import { LanguageSwitcher } from "./components/LanguageSwitcher";
 
 // Dashboard Module
 import { DashboardPage } from "./modules/dashboard/DashboardPage";
@@ -429,6 +430,8 @@ function App() {
   return (
     <Router>
       <AppRoutesInner />
+
+      <LanguageSwitcher />
     </Router>
   );
 }

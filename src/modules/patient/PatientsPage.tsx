@@ -2,9 +2,12 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../../store";
+
+import { useTranslation } from "react-i18next";
 import AddPatientModal from "./AddPatientModal";
 
 export const PatientsPage = () => {
+  const { t } = useTranslation("common");
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -161,10 +164,11 @@ export const PatientsPage = () => {
       {/* Header Section */}
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Patient Records
+
+          {t("pages.patients.title")}
         </h1>
         <p className="text-gray-600">
-          Manage patient medical records and information
+          {t("pages.patients.subtitle")}
         </p>
       </div>
 
@@ -175,12 +179,14 @@ export const PatientsPage = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 mb-1">
-                Total Patients
+
+                {t("patientsPage.summaryCards.totalPatients")}
               </p>
               <p className="text-3xl font-bold text-gray-900">
                 {patients.length}
               </p>
-              <p className="text-sm text-gray-500 mt-1">Active records</p>
+
+              <p className="text-sm text-gray-500 mt-1">{t("patientsPage.summaryCards.activeRecords")}</p>
             </div>
             <div className="w-12 h-12 flex items-center justify-center">
               <svg
@@ -205,10 +211,11 @@ export const PatientsPage = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 mb-1">
-                New This Month
+
+                {t("patientsPage.summaryCards.newThisMonth")}
               </p>
               <p className="text-3xl font-bold text-gray-900">12</p>
-              <p className="text-sm text-green-600 mt-1">+8% from last month</p>
+              <p className="text-sm text-green-600 mt-1">{t("patientsPage.summaryCards.growthFromLastMonth")}</p>
             </div>
             <div className="w-12 h-12 flex items-center justify-center">
               <svg
@@ -233,10 +240,10 @@ export const PatientsPage = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 mb-1">
-                Pending Tests
+                {t("patientsPage.summaryCards.pendingTests")}
               </p>
               <p className="text-3xl font-bold text-gray-900">47</p>
-              <p className="text-sm text-orange-600 mt-1">Awaiting results</p>
+              <p className="text-sm text-orange-600 mt-1">{t("patientsPage.summaryCards.awaitingResults")}</p>
             </div>
             <div className="w-12 h-12 flex items-center justify-center">
               <svg
@@ -261,10 +268,11 @@ export const PatientsPage = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 mb-1">
-                Completed Today
+
+                {t("patientsPage.summaryCards.completedToday")}
               </p>
               <p className="text-3xl font-bold text-gray-900">23</p>
-              <p className="text-sm text-blue-600 mt-1">Test results</p>
+              <p className="text-sm text-blue-600 mt-1">{t("patientsPage.summaryCards.testResults")}</p>
             </div>
             <div className="w-12 h-12 flex items-center justify-center">
               <svg
@@ -291,10 +299,11 @@ export const PatientsPage = () => {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-lg font-semibold text-gray-900">
-                All Patients
+
+                {t("patientsPage.allPatients.title")}
               </h3>
               <p className="text-sm text-gray-600">
-                View and manage patient medical records
+                {t("patientsPage.allPatients.subtitle")}
               </p>
             </div>
           </div>
@@ -307,7 +316,8 @@ export const PatientsPage = () => {
                 <div className="relative max-w-md w-full">
                   <input
                     type="text"
-                    placeholder="Search by name, email, or MRN..."
+
+                    placeholder={t("patientsPage.search.placeholder")}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     onKeyDown={handleKeyDown}
@@ -351,13 +361,15 @@ export const PatientsPage = () => {
                   onClick={handleSearch}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition"
                 >
-                  Search
+
+                  {t("patientsPage.search.button")}
                 </button>
 
                 {/* No results message */}
                 {noResults && (
                   <span className="ml-3 text-sm text-red-500 font-medium whitespace-nowrap">
-                    No results found
+
+                    {t("patientsPage.search.noResults")}
                   </span>
                 )}
               </div>
@@ -382,7 +394,7 @@ export const PatientsPage = () => {
                     d="M12 4v16m8-8H4"
                   />
                 </svg>
-                Add Patient
+                {t("patientsPage.actions.addPatient")}
               </button>
 
               {/* Overlay */}
@@ -401,22 +413,23 @@ export const PatientsPage = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[100px]">
-                  MRN
+
+                  {t("patientsPage.table.mrn")}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[180px]">
-                  Patient Name
+                  {t("patientsPage.table.patientName")}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[120px]">
-                  Age/Gender
+                  {t("patientsPage.table.ageGender")}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[200px]">
-                  Contact
+                  {t("patientsPage.table.contact")}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[150px]">
-                  Last Visit
+                  {t("patientsPage.table.lastVisit")}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[140px]">
-                  Actions
+                  {t("patientsPage.table.actions")}
                 </th>
               </tr>
             </thead>
@@ -435,7 +448,8 @@ export const PatientsPage = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap w-[120px]">
                     <div className="text-sm text-gray-900">
-                      {patient.age} years / {patient.gender}
+
+                      {patient.age} {t("patientsPage.table.years")} / {patient.gender}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap w-[200px]">
@@ -527,7 +541,7 @@ export const PatientsPage = () => {
                                   d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
                                 />
                               </svg>
-                              View Details
+                              {t("patientsPage.actions.viewDetails")}
                             </button>
                             <button
                               onMouseDown={(e) => {
@@ -550,7 +564,7 @@ export const PatientsPage = () => {
                                   d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
                                 />
                               </svg>
-                              Edit Record
+                              {t("patientsPage.actions.editRecord")}
                             </button>
                             <button
                               onMouseDown={(e) => {
@@ -573,7 +587,7 @@ export const PatientsPage = () => {
                                   d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                                 />
                               </svg>
-                              Delete Patient
+                              {t("patientsPage.actions.deletePatient")}
                             </button>
                           </div>
                         </div>
@@ -588,7 +602,8 @@ export const PatientsPage = () => {
           {/* Nếu không tìm thấy kết quả */}
           {filteredPatients.length === 0 && (
             <div className="text-center py-6 text-gray-500 text-sm">
-              No data
+
+              {t("patientsPage.table.noData")}
             </div>
           )}
         </div>
@@ -602,10 +617,11 @@ export const PatientsPage = () => {
             disabled={currentPage === 1}
             className="px-3 py-1 text-xs bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Previous
+
+            {t("patientsPage.pagination.previous")}
           </button>
           <span className="text-sm text-gray-600">
-            Page {currentPage} of {totalPages}
+            {t("patientsPage.pagination.page", { current: currentPage, total: totalPages })}
           </span>
           <button
             onClick={() =>
@@ -614,7 +630,8 @@ export const PatientsPage = () => {
             disabled={currentPage === totalPages}
             className="px-3 py-1 text-xs bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Next
+
+            {t("patientsPage.pagination.next")}
           </button>
         </div>
       )}
