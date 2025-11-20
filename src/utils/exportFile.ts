@@ -48,7 +48,10 @@ export const exportFile = (testResultData: TestResultData): void => {
   }
 
   // Export file
-  const fileName = `TestResult_${testResultData.testOrderId}_${new Date().getTime()}.xlsx`;
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-US').replace(/\//g, '-'); // MM-DD-YYYY
+  const patientName = testResultData.patient;
+  const fileName = `Test Orders-${patientName}-${dateStr}.xlsx`;
   XLSX.writeFile(workbook, fileName);
   
   console.log(`✅ Exported to ${fileName}`);
