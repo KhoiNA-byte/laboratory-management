@@ -54,6 +54,6 @@ export const exportFile = (testResultData: TestResultData): void => {
   const fileName = `Test Orders-${patientName}-${dateStr}.xlsx`;
   XLSX.writeFile(workbook, fileName);
   
-  console.log(`✅ Exported to ${fileName}`);
+
 };
 
