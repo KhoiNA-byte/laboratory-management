@@ -6,7 +6,7 @@ import {
   DocumentDuplicateIcon,
 } from "@heroicons/react/24/outline";
 import { TestParameter } from "../../types/testResult";
-import { exportFile } from "../../utils/exportFile";
+import { exportExcelFile, exportPdfFile } from "../../utils/exportFile";
 
 function detectObxFlag(line: string): "High" | "Low" | "Normal" {
   // Simple heuristics:
@@ -47,6 +47,7 @@ export default function HL7Viewer({
   const [search, setSearch] = useState("");
   const [highlightAbnormal, setHighlightAbnormal] = useState(false);
   const [onlyObx, setOnlyObx] = useState(false);
+  const [showDownloadMenu, setShowDownloadMenu] = useState(false);
 
   // prepare lines and metadata
   const lines = useMemo(() => {
@@ -84,9 +85,8 @@ export default function HL7Viewer({
     }
   };
 
-  const downloadHL7 = () => {
-    // Gọi exportFile với đầy đủ data
-    exportFile({
+  const handleDownloadExcel = () => {
+    exportExcelFile({
       testOrderId,
       patient,
       date,
@@ -96,18 +96,21 @@ export default function HL7Viewer({
       parameters,
       hl7_raw: rawHL7,
     });
+    setShowDownloadMenu(false);
+  };
 
-    // Download file HL7
-
-    // const blob = new Blob([rawHL7], { type: "text/plain;charset=utf-8" });
-    // const url = URL.createObjectURL(blob);
-    // const a = document.createElement("a");
-    // a.href = url;
-    // a.download = `${orderNumber || "message"}.hl7`;
-    // document.body.appendChild(a);
-    // a.click();
-    // a.remove();
-    // URL.revokeObjectURL(url);
+  const handleDownloadPdf = () => {
+    exportPdfFile({
+      testOrderId,
+      patient,
+      date,
+      tester,
+      status,
+      sex,
+      parameters,
+      hl7_raw: rawHL7,
+    });
+    setShowDownloadMenu(false);
   };
 
   return (
@@ -162,12 +165,34 @@ export default function HL7Viewer({
               >
                 <DocumentDuplicateIcon className="h-4 w-4" /> Copy
               </button>
-              <button
-                onClick={downloadHL7}
-                className="px-3 py-1 border rounded-md text-sm hover:shadow"
-              >
-                Download
-              </button>
+
+              {/* Download button with dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowDownloadMenu(!showDownloadMenu)}
+                  className="px-3 py-1 border rounded-md text-sm hover:shadow"
+                >
+                  Download ▼
+                </button>
+
+                {/* Dropdown menu */}
+                {showDownloadMenu && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white border rounded-md shadow-lg z-10">
+                    <button
+                      onClick={handleDownloadExcel}
+                      className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center gap-2"
+                    >
+                      Download Excel
+                    </button>
+                    <button
+                      onClick={handleDownloadPdf}
+                      className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center gap-2"
+                    >
+                      Download PDF
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
