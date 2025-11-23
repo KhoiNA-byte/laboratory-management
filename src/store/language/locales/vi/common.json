@@ -818,10 +818,39 @@
     "noResults": "Không tìm thấy kết quả"
   },
   "patientsPage": {
+    "title": "Hồ sơ bệnh nhân",
+    "subtitle": "Quản lý hồ sơ và thông tin bệnh nhân",
+    "summaryCards": {
+      "totalPatients": "Tổng số bệnh nhân",
+      "activeRecords": "Hồ sơ đang hoạt động",
+      "newThisMonth": "Thêm mới trong tháng",
+      "growthFromLastMonth": "+{{percentage}}% so với tháng trước",
+      "pendingTests": "Xét nghiệm chờ xử lý",
+      "awaitingResults": "Đang chờ kết quả",
+      "completedToday": "Hoàn thành hôm nay",
+      "testResults": "Kết quả xét nghiệm"
+    },
+    "allPatients": {
+      "title": "Tất cả bệnh nhân",
+      "subtitle": "Xem và quản lý hồ sơ bệnh nhân"
+    },
     "table": {
       "lastVisit": "Lần khám cuối",
-      "name": "Tên"
-    
+      "name": "Tên",
+      "mrn": "MRN",
+      "ageGender": "Tuổi / Giới tính",
+      "phone": "Điện thoại",
+      "email": "Email",
+      "contact": "Liên hệ",
+      "actions": "Thao tác",
+      "viewDetails": "Xem chi tiết",
+      "editRecord": "Chỉnh sửa",
+      "deletePatient": "Xóa bệnh nhân",
+      "noPatientsFound": "Không tìm thấy bệnh nhân nào."
+    },
+    "filters": {
+      "searchPlaceholder": "Tìm theo tên, email hoặc MRN...",
+      "addPatient": "Thêm bệnh nhân"
     }
   }
 }
