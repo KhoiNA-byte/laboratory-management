@@ -6,7 +6,7 @@ import {
   DocumentDuplicateIcon,
 } from "@heroicons/react/24/outline";
 import { TestParameter } from "../../types/testResult";
-import { exportExcelFile, exportPdfFile } from "../../utils/exportFile";
+import { exportExcelFile, exportPdfFile } from "../../io/exportFile";
 
 function detectObxFlag(line: string): "High" | "Low" | "Normal" {
   // Simple heuristics:
