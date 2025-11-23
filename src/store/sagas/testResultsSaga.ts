@@ -21,6 +21,7 @@ import {
   ListRow,
   CommentItem,
 } from "../slices/testResultsSlice";
+import { API_BASE_URL } from "../../services/apiConfig";
 
 /**
  * Saga file: supports nested test_orders under user resource:
@@ -32,7 +33,7 @@ import {
  * - When updating/patching an order, prefer /user/{userId}/test_orders/{orderId} if owner userId known.
  */
 
-const API_BASE = "https://69085724b49bea95fbf32f71.mockapi.io";
+
 const sid = (v: any) => (v === null || v === undefined ? "" : String(v));
 
 function randBetween(a: number, b: number) {
@@ -122,7 +123,7 @@ async function resolveUserNameAsync(
 
   try {
     const q = await axios.get(
-      `${API_BASE}/user?userId=${encodeURIComponent(uid)}`
+      `${API_BASE_URL}/user?userId=${encodeURIComponent(uid)}`
     );
     const arr = q?.data ?? [];
     if (Array.isArray(arr) && arr.length > 0 && arr[0].name) {
@@ -132,7 +133,7 @@ async function resolveUserNameAsync(
   } catch {}
 
   try {
-    const byId = await axios.get(`${API_BASE}/user/${encodeURIComponent(uid)}`);
+    const byId = await axios.get(`${API_BASE_URL}/user/${encodeURIComponent(uid)}`);
     if (byId?.data && byId.data.name) {
       userMap[uid] = byId.data.name;
       return byId.data.name;
@@ -140,7 +141,7 @@ async function resolveUserNameAsync(
   } catch {}
 
   try {
-    const all = await axios.get(`${API_BASE}/user`);
+    const all = await axios.get(`${API_BASE_URL}/user`);
     const arr = all?.data ?? [];
     if (Array.isArray(arr) && arr.length > 0) {
       const f = arr.find(
@@ -170,7 +171,7 @@ function extractUserName(u: any) {
 async function fetchAllOrdersAsync(): Promise<any[]> {
   // try legacy endpoint
   try {
-    const res = await axios.get(`${API_BASE}/test_orders`);
+    const res = await axios.get(`${API_BASE_URL}/test_orders`);
     if (Array.isArray(res?.data)) return res.data;
   } catch {
     // ignore - fallback to nested per-user
@@ -178,7 +179,7 @@ async function fetchAllOrdersAsync(): Promise<any[]> {
 
   // nested per-user
   try {
-    const ures = await axios.get(`${API_BASE}/user`);
+    const ures = await axios.get(`${API_BASE_URL}/user`);
     const users: any[] = ures?.data ?? [];
     const allOrders: any[] = [];
     for (const u of users) {
@@ -187,7 +188,7 @@ async function fetchAllOrdersAsync(): Promise<any[]> {
       if (!uid) continue;
       try {
         const tor = await axios.get(
-          `${API_BASE}/user/${encodeURIComponent(uid)}/test_orders`
+          `${API_BASE_URL}/user/${encodeURIComponent(uid)}/test_orders`
         );
         if (Array.isArray(tor?.data)) {
           // attach owner for easier patches later
@@ -217,7 +218,7 @@ async function findOrderByIdAsync(orderId: any): Promise<any | null> {
   // try direct
   try {
     const r = await axios.get(
-      `${API_BASE}/test_orders/${encodeURIComponent(idStr)}`
+      `${API_BASE_URL}/test_orders/${encodeURIComponent(idStr)}`
     );
     if (r?.data) return r.data;
   } catch {}
@@ -225,7 +226,7 @@ async function findOrderByIdAsync(orderId: any): Promise<any | null> {
   // try fallback resource id on /test_order collection (query)
   try {
     const q = await axios.get(
-      `${API_BASE}/test_orders?id=${encodeURIComponent(idStr)}`
+      `${API_BASE_URL}/test_orders?id=${encodeURIComponent(idStr)}`
     );
     const arr = q?.data ?? [];
     if (Array.isArray(arr) && arr.length > 0) return arr[0];
@@ -233,7 +234,7 @@ async function findOrderByIdAsync(orderId: any): Promise<any | null> {
 
   // try nested per-user
   try {
-    const ures = await axios.get(`${API_BASE}/user`);
+    const ures = await axios.get(`${API_BASE_URL}/user`);
     const users: any[] = ures?.data ?? [];
     for (const u of users) {
       const uid = u?.userId ?? u?.id;
@@ -241,7 +242,7 @@ async function findOrderByIdAsync(orderId: any): Promise<any | null> {
       // try direct item path first
       try {
         const direct = await axios.get(
-          `${API_BASE}/user/${encodeURIComponent(
+          `${API_BASE_URL}/user/${encodeURIComponent(
             uid
           )}/test_orders/${encodeURIComponent(idStr)}`
         );
@@ -253,7 +254,7 @@ async function findOrderByIdAsync(orderId: any): Promise<any | null> {
         // try list and search
         try {
           const list = await axios.get(
-            `${API_BASE}/user/${encodeURIComponent(uid)}/test_orders`
+            `${API_BASE_URL}/user/${encodeURIComponent(uid)}/test_orders`
           );
           const arr = list?.data ?? [];
           const found = (arr || []).find((x: any) => String(x.id) === idStr);
@@ -269,7 +270,7 @@ async function findOrderByIdAsync(orderId: any): Promise<any | null> {
 
   // try global test_orders (plural) if exists
   try {
-    const t = await axios.get(`${API_BASE}/test_orders`);
+    const t = await axios.get(`${API_BASE_URL}/test_orders`);
     const arr = t?.data ?? [];
     const f = (arr || []).find((x: any) => String(x.id) === idStr);
     if (f) return f;
@@ -311,13 +312,13 @@ function formatResult(key: string, v: number) {
 function* fetchListSaga(): Generator<any, void, any> {
   try {
     // fetch results (unchanged)
-    const resultsRes = yield call(axios.get, `${API_BASE}/test_results`);
+    const resultsRes = yield call(axios.get, `${API_BASE_URL}/test_results`);
     const results: any[] = resultsRes?.data ?? [];
 
     // fetch users once (best-effort)
     let users: any[] = [];
     try {
-      const usersRes = yield call(axios.get, `${API_BASE}/user`);
+      const usersRes = yield call(axios.get, `${API_BASE_URL}/user`);
       users = usersRes?.data ?? [];
     } catch {
       users = [];
@@ -532,7 +533,7 @@ function* runTestSaga(
 
     const instRes = yield call(
       axios.get,
-      `${API_BASE}/instruments/${sid(instrumentId)}`
+      `${API_BASE_URL}/instruments/${sid(instrumentId)}`
     );
     const inst = instRes?.data ?? {};
 
@@ -724,7 +725,7 @@ function* runTestSaga(
     try {
       const trRes = yield call(
         axios.post,
-        `${API_BASE}/test_results`,
+        `${API_BASE_URL}/test_results`,
         testResultPayload
       );
       trResData = trRes?.data ?? null;
@@ -737,7 +738,7 @@ function* runTestSaga(
       try {
         const find = yield call(
           axios.get,
-          `${API_BASE}/test_results?run_id=${encodeURIComponent(runId)}`
+          `${API_BASE_URL}/test_results?run_id=${encodeURIComponent(runId)}`
         );
         const arr = find?.data ?? [];
         if (arr.length > 0) testResultId = arr[0].id ?? null;
@@ -757,7 +758,7 @@ function* runTestSaga(
         unit: r.unit,
       };
       try {
-        yield call(axios.post, `${API_BASE}/test_result_rows`, rowPayload);
+        yield call(axios.post, `${API_BASE_URL}/test_result_rows`, rowPayload);
       } catch {}
     }
 
@@ -769,7 +770,7 @@ function* runTestSaga(
       try {
         yield call(
           axios.patch,
-          `${API_BASE}/user/${encodeURIComponent(
+          `${API_BASE_URL}/user/${encodeURIComponent(
             ownerUserId
           )}/test_orders/${sid(orderId)}`,
           {
@@ -788,7 +789,7 @@ function* runTestSaga(
     if (!patched) {
       try {
         // try legacy singular collection
-        yield call(axios.patch, `${API_BASE}/test_order/${sid(orderId)}`, {
+        yield call(axios.patch, `${API_BASE_URL}/test_order/${sid(orderId)}`, {
           run_id: runId,
           runByUserId: currentUserId ?? "unknown",
           tester: currentUserName ?? order?.tester ?? order?.requester,
@@ -801,7 +802,7 @@ function* runTestSaga(
           if (ownerUserId) {
             yield call(
               axios.put,
-              `${API_BASE}/user/${encodeURIComponent(
+              `${API_BASE_URL}/user/${encodeURIComponent(
                 ownerUserId
               )}/test_orders/${sid(orderId)}`,
               {
@@ -813,7 +814,7 @@ function* runTestSaga(
             );
             patched = true;
           } else {
-            yield call(axios.put, `${API_BASE}/test_orders/${sid(orderId)}`, {
+            yield call(axios.put, `${API_BASE_URL}/test_orders/${sid(orderId)}`, {
               ...(order ?? {}),
               run_id: runId,
               runByUserId: currentUserId ?? "unknown",
@@ -841,7 +842,7 @@ function* runTestSaga(
             try {
               const rcur = yield call(
                 axios.get,
-                `${API_BASE}/reagents/${encodeURIComponent(sid(rid))}`
+                `${API_BASE_URL}/reagents/${encodeURIComponent(sid(rid))}`
               );
               cur = rcur?.data ?? null;
             } catch (err) {
@@ -854,7 +855,7 @@ function* runTestSaga(
               try {
                 const searchRes = yield call(
                   axios.get,
-                  `${API_BASE}/reagents?search=${encodeURIComponent(
+                  `${API_BASE_URL}/reagents?search=${encodeURIComponent(
                     String(rid)
                   )}`
                 );
@@ -911,7 +912,7 @@ function* runTestSaga(
           try {
             const patchRes = yield call(
               axios.patch,
-              `${API_BASE}/reagents/${encodeURIComponent(sid(cur.id))}`,
+              `${API_BASE_URL}/reagents/${encodeURIComponent(sid(cur.id))}`,
               { quantity: newQty }
             );
             console.info(
@@ -929,13 +930,13 @@ function* runTestSaga(
               // fetch existing full object then PUT updated object (safer fallback)
               const existingRes = yield call(
                 axios.get,
-                `${API_BASE}/reagents/${encodeURIComponent(sid(cur.id))}`
+                `${API_BASE_URL}/reagents/${encodeURIComponent(sid(cur.id))}`
               );
               const existing = existingRes?.data ?? {};
               const putPayload = { ...existing, quantity: newQty };
               const putRes = yield call(
                 axios.put,
-                `${API_BASE}/reagents/${encodeURIComponent(sid(cur.id))}`,
+                `${API_BASE_URL}/reagents/${encodeURIComponent(sid(cur.id))}`,
                 putPayload
               );
               console.info(
@@ -974,7 +975,7 @@ function* runTestSaga(
         runByUserId: currentUserId ?? "unknown",
         createdByName: currentUserName ?? "unknown",
       };
-      yield call(axios.post, `${API_BASE}/comments`, commentsPayload);
+      yield call(axios.post, `${API_BASE_URL}/comments`, commentsPayload);
     } catch {}
 
     const rowsToReturn: TestResultRow[] = rowsForResult.map((r: any) => ({
@@ -1008,7 +1009,7 @@ function* updateCommentsSaga(
     try {
       const found = yield call(
         axios.get,
-        `${API_BASE}/comments?run_id=${encodeURIComponent(runId)}`
+        `${API_BASE_URL}/comments?run_id=${encodeURIComponent(runId)}`
       );
       const arr = found?.data ?? [];
       if (arr.length > 0) threadId = arr[0].id ?? null;
@@ -1016,16 +1017,16 @@ function* updateCommentsSaga(
 
     if (threadId) {
       try {
-        yield call(axios.patch, `${API_BASE}/comments/${sid(threadId)}`, {
+        yield call(axios.patch, `${API_BASE_URL}/comments/${sid(threadId)}`, {
           comments,
           updatedAt: new Date().toISOString(),
         });
       } catch {
         try {
           const existing =
-            (yield call(axios.get, `${API_BASE}/comments/${sid(threadId)}`))
+            (yield call(axios.get, `${API_BASE_URL}/comments/${sid(threadId)}`))
               ?.data ?? {};
-          yield call(axios.put, `${API_BASE}/comments/${sid(threadId)}`, {
+          yield call(axios.put, `${API_BASE_URL}/comments/${sid(threadId)}`, {
             ...existing,
             comments,
             updatedAt: new Date().toISOString(),
@@ -1036,7 +1037,7 @@ function* updateCommentsSaga(
       }
     } else {
       try {
-        yield call(axios.post, `${API_BASE}/comments`, {
+        yield call(axios.post, `${API_BASE_URL}/comments`, {
           run_id: runId,
           comments,
           createdAt: new Date().toISOString(),
@@ -1064,7 +1065,7 @@ function* deleteResultSaga(
   try {
     // 1) Try treat id as a resource id on /test_results
     try {
-      yield call(axios.delete, `${API_BASE}/test_results/${sid(id)}`);
+      yield call(axios.delete, `${API_BASE_URL}/test_results/${sid(id)}`);
     } catch {
       // ignore
     }
@@ -1073,12 +1074,12 @@ function* deleteResultSaga(
     try {
       const rr = yield call(
         axios.get,
-        `${API_BASE}/test_results?run_id=${enc(id)}`
+        `${API_BASE_URL}/test_results?run_id=${enc(id)}`
       );
       const arr = rr?.data ?? [];
       for (const it of arr) {
         try {
-          yield call(axios.delete, `${API_BASE}/test_results/${sid(it.resultId)}`);
+          yield call(axios.delete, `${API_BASE_URL}/test_results/${sid(it.resultId)}`);
         } catch {}
       }
     } catch {}
@@ -1087,12 +1088,12 @@ function* deleteResultSaga(
     try {
       const byRun = yield call(
         axios.get,
-        `${API_BASE}/test_result_rows?run_id=${enc(id)}`
+        `${API_BASE_URL}/test_result_rows?run_id=${enc(id)}`
       );
       const list = byRun?.data ?? [];
       for (const r of list) {
         try {
-          yield call(axios.delete, `${API_BASE}/test_result_rows/${sid(r.id)}`);
+          yield call(axios.delete, `${API_BASE_URL}/test_result_rows/${sid(r.id)}`);
         } catch {}
       }
     } catch {}
@@ -1107,12 +1108,12 @@ function* deleteResultSaga(
       try {
         const found = yield call(
           axios.get,
-          `${API_BASE}/${ep}?run_id=${enc(id)}`
+          `${API_BASE_URL}/${ep}?run_id=${enc(id)}`
         );
         const carr = found?.data ?? [];
         for (const t of carr) {
           try {
-            yield call(axios.delete, `${API_BASE}/${ep}/${sid(t.id)}`);
+            yield call(axios.delete, `${API_BASE_URL}/${ep}/${sid(t.id)}`);
           } catch {}
         }
       } catch {
@@ -1125,7 +1126,7 @@ function* deleteResultSaga(
     try {
       const toRes = yield call(
         axios.get,
-        `${API_BASE}/test_orders?run_id=${enc(id)}`
+        `${API_BASE_URL}/test_orders?run_id=${enc(id)}`
       );
       const ords = toRes?.data ?? [];
       for (const o of ords) {
@@ -1133,11 +1134,11 @@ function* deleteResultSaga(
           // prefer deleting by resource id if available
           if (o && o.id) {
             try {
-              yield call(axios.delete, `${API_BASE}/test_orders/${sid(o.id)}`);
+              yield call(axios.delete, `${API_BASE_URL}/test_orders/${sid(o.id)}`);
             } catch {
               // some APIs may use /test_order singular for delete
               try {
-                yield call(axios.delete, `${API_BASE}/test_order/${sid(o.id)}`);
+                yield call(axios.delete, `${API_BASE_URL}/test_order/${sid(o.id)}`);
               } catch {}
             }
           }
@@ -1149,14 +1150,14 @@ function* deleteResultSaga(
     try {
       const toRes2 = yield call(
         axios.get,
-        `${API_BASE}/test_order?run_id=${enc(id)}`
+        `${API_BASE_URL}/test_order?run_id=${enc(id)}`
       );
       const ords2 = toRes2?.data ?? [];
       for (const o of ords2) {
         try {
           if (o && o.id) {
             try {
-              yield call(axios.delete, `${API_BASE}/test_order/${sid(o.id)}`);
+              yield call(axios.delete, `${API_BASE_URL}/test_order/${sid(o.id)}`);
             } catch {
               // ignore
             }
@@ -1167,7 +1168,7 @@ function* deleteResultSaga(
 
     // 5c. Try nested user path: GET /user then for each user GET /user/{userId}/test_orders?run_id=...
     try {
-      const ures = yield call(axios.get, `${API_BASE}/user`);
+      const ures = yield call(axios.get, `${API_BASE_URL}/user`);
       const users = ures?.data ?? [];
       for (const u of users) {
         const uid = u?.userId ?? u?.id;
@@ -1175,7 +1176,7 @@ function* deleteResultSaga(
         try {
           const nested = yield call(
             axios.get,
-            `${API_BASE}/user/${encodeURIComponent(
+            `${API_BASE_URL}/user/${encodeURIComponent(
               uid
             )}/test_orders?run_id=${enc(id)}`
           );
@@ -1185,7 +1186,7 @@ function* deleteResultSaga(
               // delete nested resource
               yield call(
                 axios.delete,
-                `${API_BASE}/user/${encodeURIComponent(uid)}/test_orders/${sid(
+                `${API_BASE_URL}/user/${encodeURIComponent(uid)}/test_orders/${sid(
                   no.id
                 )}`
               );
@@ -1195,7 +1196,7 @@ function* deleteResultSaga(
                 if (no && no.id) {
                   yield call(
                     axios.delete,
-                    `${API_BASE}/test_orders/${sid(no.id)}`
+                    `${API_BASE_URL}/test_orders/${sid(no.id)}`
                   );
                 }
               } catch {}
@@ -1210,10 +1211,10 @@ function* deleteResultSaga(
     // 6) Best-effort: also try delete test_orders by searching id as resource id
     try {
       // try singular resource delete
-      yield call(axios.delete, `${API_BASE}/test_orders/${sid(id)}`);
+      yield call(axios.delete, `${API_BASE_URL}/test_orders/${sid(id)}`);
     } catch {
       try {
-        yield call(axios.delete, `${API_BASE}/test_order/${sid(id)}`);
+        yield call(axios.delete, `${API_BASE_URL}/test_order/${sid(id)}`);
       } catch {}
     }
 
@@ -1235,7 +1236,7 @@ function* fetchDetailSaga(
     try {
       const byId = yield call(
         axios.get,
-        `${API_BASE}/test_results/${encodeURIComponent(orderNumber)}`
+        `${API_BASE_URL}/test_results/${encodeURIComponent(orderNumber)}`
       );
       if (byId?.data) testResult = byId.data;
     } catch {}
@@ -1244,7 +1245,7 @@ function* fetchDetailSaga(
       try {
         const byRun = yield call(
           axios.get,
-          `${API_BASE}/test_results?run_id=${encodeURIComponent(orderNumber)}`
+          `${API_BASE_URL}/test_results?run_id=${encodeURIComponent(orderNumber)}`
         );
         const arr = byRun?.data ?? [];
         if (arr.length > 0) testResult = arr[0];
@@ -1260,7 +1261,7 @@ function* fetchDetailSaga(
         if (order && order.run_id) {
           const tr = yield call(
             axios.get,
-            `${API_BASE}/test_results?run_id=${encodeURIComponent(
+            `${API_BASE_URL}/test_results?run_id=${encodeURIComponent(
               order.run_id
             )}`
           );
@@ -1281,7 +1282,7 @@ function* fetchDetailSaga(
       try {
         const rr = yield call(
           axios.get,
-          `${API_BASE}/test_result_rows?run_id=${encodeURIComponent(
+          `${API_BASE_URL}/test_result_rows?run_id=${encodeURIComponent(
             String(runId)
           )}`
         );
@@ -1303,7 +1304,7 @@ function* fetchDetailSaga(
     try {
       const cc = yield call(
         axios.get,
-        `${API_BASE}/comments?run_id=${encodeURIComponent(String(runId))}`
+        `${API_BASE_URL}/comments?run_id=${encodeURIComponent(String(runId))}`
       );
       const carr = cc?.data ?? [];
       if (carr.length > 0) externalComments = carr[0].comments ?? [];
