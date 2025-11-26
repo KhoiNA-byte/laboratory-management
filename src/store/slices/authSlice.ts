@@ -50,6 +50,7 @@ const authSlice = createSlice({
         user: User;
         token: string;
         permissions: string[]; // Add permissions here
+        redirectPath: string;
       }>
     ) => {
       state.loading = false;
@@ -57,6 +58,7 @@ const authSlice = createSlice({
       state.user = action.payload.user;
       state.token = action.payload.token;
       state.permissions = action.payload.permissions; // Set permissions
+      state.redirectPath = action.payload.redirectPath;
       state.error = null;
     },
     loginFailure: (state, action: PayloadAction<string>) => {
@@ -65,6 +67,7 @@ const authSlice = createSlice({
       state.user = null;
       state.token = null;
       state.permissions = []; // Clear permissions on failure
+      state.redirectPath = null;
       state.error = action.payload;
     },
     logoutRequest: (state) => {

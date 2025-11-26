@@ -73,7 +73,7 @@ export const Navbar = ({
   const location = useLocation();
   const meta = ROUTE_META[location.pathname] || {};
 
-  const title = propTitle ?? meta.title ?? "Default Title";
+  const title = propTitle ?? meta.title ?? "Dashboard";
   const subtitle = propSubtitle ?? meta.subtitle ?? "";
 
   const handleLogout = () => dispatch(logoutRequest());

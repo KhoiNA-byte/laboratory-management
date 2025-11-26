@@ -197,7 +197,7 @@ export const RolesPage = () => {
           status: "active",
         });
         dispatch(clearCreateSuccess());
-      }, 2000);
+      });
       return () => clearTimeout(timer);
     }
   }, [createSuccess, showCreateModal, dispatch]);
@@ -209,7 +209,7 @@ export const RolesPage = () => {
         setShowUpdateModal(false);
         setSelectedRole(null);
         dispatch(clearUpdateSuccess());
-      }, 2000);
+      });
       return () => clearTimeout(timer);
     }
   }, [updateSuccess, showUpdateModal, dispatch]);
