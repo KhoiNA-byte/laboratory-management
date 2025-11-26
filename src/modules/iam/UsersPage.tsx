@@ -234,6 +234,9 @@ export const UsersPage = () => {
   }, []);
 
   useEffect(() => {
+    dispatch({ type: "roles/getRolesRequest" });
+  }, [dispatch]);
+  useEffect(() => {
     dispatch({ type: "users/getUsersRequest" });
   }, [dispatch]);
 
