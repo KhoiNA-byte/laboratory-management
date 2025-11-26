@@ -83,6 +83,7 @@ const TableContainer = styled.div`
   border-radius: 0.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   border: 1px solid #e5e7eb;
+  position: relative;
 `;
 
 const TableHeader = styled.div`
@@ -203,6 +204,9 @@ const SearchIcon = styled.div`
 
 const TableWrapper = styled.div`
   overflow-x: auto;
+  /* Ensure dropdown menus are not clipped by overflow */
+  overflow-y: visible;
+  position: relative;
 `;
 
 const Table = styled.table`
@@ -242,6 +246,9 @@ const TableRow = styled.tr`
 const TableCell = styled.td`
   padding: 1rem 1.5rem;
   white-space: nowrap;
+  position: relative;
+  /* Ensure dropdown is not clipped */
+  overflow: visible;
 `;
 
 const OrderNumber = styled.div`
@@ -304,6 +311,8 @@ const OrderDate = styled.div`
 
 const ActionsContainer = styled.div`
   position: relative;
+  /* Ensure dropdown container doesn't affect layout */
+  display: inline-block;
 `;
 
 const ActionsButton = styled.button`
@@ -331,9 +340,10 @@ const DropdownMenu = styled.div`
   background: white;
   border-radius: 0.375rem;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  z-index: 10;
+  z-index: 9999;
   border: 1px solid #e5e7eb;
   overflow: hidden;
+  /* Ensure dropdown appears above all other elements including sidebar */
 `;
 
 const DropdownContent = styled.div`
@@ -435,6 +445,7 @@ export const TestOrdersPage = () => {
 
   const handleViewDetails = (orderNumber: string) => {
     console.log("View Details clicked for:", orderNumber);
+    setShowActionsDropdown(null);
     navigate(`/admin/test-orders/${orderNumber}`);
   };
 
@@ -751,7 +762,7 @@ export const TestOrdersPage = () => {
                         </ActionsButton>
 
                         {showActionsDropdown === order.orderNumber && (
-                          <DropdownMenu data-dropdown-container>
+                          <DropdownMenu data-dropdown-container data-dropdown-menu>
                             <DropdownContent>
                               <DropdownItem
                                 onClick={() =>

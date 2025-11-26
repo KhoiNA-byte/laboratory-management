@@ -43,6 +43,7 @@ export const PatientsPage = () => {
 
   // New delete handler using Redux
   const handleDeletePatient = (mrn: string) => {
+    setOpenDropdown(null);
     const confirmed = window.confirm(
       t("patientsPage.table.confirmDelete", { mrn })
     );
