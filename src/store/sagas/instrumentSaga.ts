@@ -1,7 +1,7 @@
 // sagas/instrumentsSaga.ts
 import { call, put, takeEvery, takeLatest } from 'redux-saga/effects';
 import { PayloadAction } from '@reduxjs/toolkit';
-import { instrumentService } from '../../services/instruments';
+import { instrumentService } from '../../services/instrumentsApi';
 import { Instrument } from '../../types';
 
 // Action Types Constants 

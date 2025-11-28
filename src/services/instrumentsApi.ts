@@ -1,4 +1,4 @@
-// services/instruments.ts
+// services/instrumentsApi.ts
 import { Instrument } from '../types';
 
 const BASE_URL = import.meta.env.VITE_MOCKAPI_BASE_URL;

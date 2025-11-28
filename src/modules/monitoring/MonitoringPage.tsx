@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSelector, useDispatch } from 'react-redux'
 import { RootState } from '../../store'
-import { eventService } from '../../services/event'
+import { eventService } from '../../services/eventApi'
 import { INSTRUMENT_ACTION_TYPES } from '../../store/sagas/instrumentSaga'
 
 interface MetricCardProps {
