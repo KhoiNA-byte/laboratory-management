@@ -1,18 +1,41 @@
 // Action Types
 export const ACTION_TYPES = {
-  FETCH_INSTRUMENTS_START: 'instruments/fetchInstrumentsStart',
-  FETCH_INSTRUMENTS_SUCCESS: 'instruments/fetchInstrumentsSuccess', 
-  FETCH_INSTRUMENTS_FAILURE: 'instruments/fetchInstrumentsFailure',
-  ADD_INSTRUMENT_REQUEST: 'instruments/addInstrumentRequest',
-  ADD_INSTRUMENT_SUCCESS: 'instruments/addInstrumentSuccess',
-  ADD_INSTRUMENT_FAILURE: 'instruments/addInstrumentFailure',
-  UPDATE_INSTRUMENT_REQUEST: 'instruments/updateInstrumentRequest',
-  UPDATE_INSTRUMENT_SUCCESS: 'instruments/updateInstrumentSuccess',
-  UPDATE_INSTRUMENT_FAILURE: 'instruments/updateInstrumentFailure',
-  DELETE_INSTRUMENT_REQUEST: 'instruments/deleteInstrumentRequest',
-  DELETE_INSTRUMENT_SUCCESS: 'instruments/deleteInstrumentSuccess',
-  DELETE_INSTRUMENT_FAILURE: 'instruments/deleteInstrumentFailure',
+    // Fetch
+    FETCH_INSTRUMENTS_REQUEST: 'instruments/fetchInstrumentsRequest',
+    FETCH_INSTRUMENTS_SUCCESS: 'instruments/fetchInstrumentsSuccess', 
+    FETCH_INSTRUMENTS_FAILURE: 'instruments/fetchInstrumentsFailure',
+    
+    // Add
+    ADD_INSTRUMENT_REQUEST: 'instruments/addInstrumentRequest',
+    ADD_INSTRUMENT_SUCCESS: 'instruments/addInstrumentSuccess',
+    ADD_INSTRUMENT_FAILURE: 'instruments/addInstrumentFailure',
+    
+    // Delete
+    DELETE_INSTRUMENT_REQUEST: 'instruments/deleteInstrumentRequest',
+    DELETE_INSTRUMENT_SUCCESS: 'instruments/deleteInstrumentSuccess',
+    DELETE_INSTRUMENT_FAILURE: 'instruments/deleteInstrumentFailure',
+    
+    // Update (nếu có)
+    UPDATE_INSTRUMENT_REQUEST: 'instruments/updateInstrumentRequest',
+    UPDATE_INSTRUMENT_SUCCESS: 'instruments/updateInstrumentSuccess',
+    UPDATE_INSTRUMENT_FAILURE: 'instruments/updateInstrumentFailure',
   } as const;
+  
+  export { 
+    fetchInstrumentsRequest,
+    fetchInstrumentsSuccess,
+    fetchInstrumentsFailure,
+    addInstrumentRequest,
+    addInstrumentSuccess,
+    addInstrumentFailure,
+
+  updateInstrumentRequest,
+  updateInstrumentSuccess,
+  updateInstrumentFailure,
+    deleteInstrumentRequest,
+    deleteInstrumentSuccess,
+    deleteInstrumentFailure,
+  } from '../store/slices/instrumentsSlice';
   
   // Status Options
   export const INSTRUMENT_STATUS = {
