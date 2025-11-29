@@ -10,7 +10,7 @@ import {
     fetchInstrumentsRequest,
     addInstrumentRequest, 
     deleteInstrumentRequest,
-  } from '../constants/instruments';
+  } from '../constants/instruments/instruments';
   import { Instrument } from '../store/types'; // 🔹 THÊM IMPORT NÀY
 
 

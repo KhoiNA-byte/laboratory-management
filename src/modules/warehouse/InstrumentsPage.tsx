@@ -7,7 +7,7 @@ import InstrumentDetailsPopup from './InstrumentDetailPopup';
 import EditInstrumentPopup from './EditInstrumentPage';
 import AddInstrumentPopup from './AddInstrumentPage';
 import SyncInstrumentsPopup from './SyncInstrumentsPopup';
-import { CLASS_NAMES, UI_TEXT } from '../../constants/instruments';
+import { CLASS_NAMES, UI_TEXT } from '../../constants/instruments/instruments';
 import { Instrument } from '../../store/types';
 
 const InstrumentsPage: React.FC = () => {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ICONS } from '../../constants/instruments';
+import { ICONS } from '../../constants/instruments/instruments';
 
 interface IconProps {
   name: keyof typeof ICONS;

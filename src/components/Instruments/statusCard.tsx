@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { CLASS_NAMES } from '../../constants/instruments';
+import { CLASS_NAMES } from '../../constants/instruments/instruments';
 
 interface StatusCardProps {
   title: string;

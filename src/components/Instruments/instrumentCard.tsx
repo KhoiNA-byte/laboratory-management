@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next'; // 🔹 THÊM i18n
-import { CLASS_NAMES } from '../../constants/instruments';
+import { CLASS_NAMES } from '../../constants/instruments/instruments';
 import { Instrument } from '../../store/types';
 
 interface InstrumentCardProps {
