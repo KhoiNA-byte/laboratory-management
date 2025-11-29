@@ -1,5 +1,6 @@
 import React from 'react';
-import { CLASS_NAMES, UI_TEXT } from '../../constants/instruments';
+import { useTranslation } from 'react-i18next';
+import { CLASS_NAMES } from '../../constants/instruments';
 
 interface StatusCardProps {
   title: string;
@@ -26,12 +27,26 @@ export const StatusCardsGrid: React.FC<{
   maintenance: number;
   calibrationDue: number;
 }> = ({ total, active, maintenance, calibrationDue }) => {
+  const { t } = useTranslation();
+
   return (
     <div className={CLASS_NAMES.LAYOUT.CARD_GRID}>
-      <StatusCard title={UI_TEXT.STATUS_CARDS.TOTAL} value={total} />
-      <StatusCard title={UI_TEXT.STATUS_CARDS.ACTIVE} value={active} />
-      <StatusCard title={UI_TEXT.STATUS_CARDS.MAINTENANCE} value={maintenance} />
-      <StatusCard title={UI_TEXT.STATUS_CARDS.CALIBRATION_DUE} value={calibrationDue} />
+      <StatusCard 
+        title={t('instrumentsPage.summaryCards.totalInstruments')} 
+        value={total} 
+      />
+      <StatusCard 
+        title={t('instrumentsPage.summaryCards.active')} 
+        value={active} 
+      />
+      <StatusCard 
+        title={t('instrumentsPage.summaryCards.maintenance')} 
+        value={maintenance} 
+      />
+      <StatusCard 
+        title={t('instrumentsPage.summaryCards.calibrationDue')} 
+        value={calibrationDue} 
+      />
     </div>
   );
 };
