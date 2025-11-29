@@ -188,7 +188,8 @@ export const MonitoringPage = () => {
 
     // Fetch instruments khi vào trang monitoring
     useEffect(() => {
-        dispatch({ type: INSTRUMENT_ACTION_TYPES.FETCH_INSTRUMENTS_START })
+        dispatch({ type: 'FETCH_INSTRUMENTS_START' })
+
     }, [dispatch])
 
     // Tính toán metrics từ API THẬT
