@@ -49,7 +49,7 @@ export interface Instrument {
   id: string;
   name: string;
   model: string;
-  status: 'Active' | 'Maintenance' | 'Inactive';
+  status: "Active" | "Maintenance" | "Inactive";
   serialNumber: string;
   location: string;
   manufacturer: string;
@@ -63,7 +63,6 @@ export interface Instrument {
   encryption?: string;
   ipAddress?: string;
 }
-
 
 export interface Reagent {
   id: string;
@@ -119,4 +118,30 @@ export interface AuditLog {
 export interface TestType {
   id: string;
   name: string;
+}
+
+export interface Role {
+  id: string;
+  name: string;
+  description?: string;
+  permissions?: string[];
+}
+
+export interface Event {
+  id: string;
+  type?: string;
+  action?: string;
+  userId?: string;
+  description?: string;
+  timestamp?: string;
+  createdAt?: string;
+}
+export interface ReportStats {
+  totalUsers: number;
+  totalRoles: number;
+  totalTestOrders: number;
+  totalInstruments: number;
+  totalReagents: number;
+  activeUsers: number;
+  inactiveUsers: number;
 }

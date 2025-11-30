@@ -16,7 +16,6 @@ export const Sidebar = () => {
   const permissions = useSelector((state: RootState) => state.auth.permissions);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
 
-
   const { t } = useTranslation(["sidebar", "common", "layout"]);
 
   const handleUserDropdownToggle = () => {
@@ -99,27 +98,18 @@ export const Sidebar = () => {
       icon: "chart",
       requiredPermissions: [PERMISSIONS.MONITORING_READ],
     },
-    // {
-    //   path: "/admin/reports",
-    //   label: t('sidebar:reports'),
-    //   icon: "bar-chart",
-    //   requiredPermissions: [PERMISSIONS.REPORTS_READ],
-    // },
+    {
+      path: "/admin/reports",
+      label: t("sidebar:reports"),
+      icon: "bar-chart",
+      requiredPermissions: [PERMISSIONS.REPORTS_READ],
+    },
     {
       path: "/admin/profile",
       label: t("sidebar:my_profile"),
       icon: "user",
       requiredPermissions: [],
     },
-<<<<<<< HEAD
-    {
-      path: "/admin/settings",
-      label: t("sidebar:settings"),
-      icon: "cog",
-      requiredPermissions: [],
-    },
-=======
->>>>>>> feature-demo-v2
   ];
 
   // Filter menu items based on user permissions
@@ -128,11 +118,7 @@ export const Sidebar = () => {
       return true;
     }
 
-<<<<<<< HEAD
     return item.requiredPermissions.some((permission) =>
-=======
-    return item.requiredPermissions.some(permission =>
->>>>>>> feature-demo-v2
       permissions.includes(permission)
     );
   });
@@ -346,10 +332,11 @@ export const Sidebar = () => {
             <Link
               key={item.path}
               to={item.path}
-              className={`flex items-center px-4 py-3 rounded-lg transition-colors ${location.pathname === item.path
-                ? "bg-blue-100 text-blue-800 border-l-4 border-blue-600"
-                : "text-white hover:bg-gray-700"
-                }`}
+              className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
+                location.pathname === item.path
+                  ? "bg-blue-100 text-blue-800 border-l-4 border-blue-600"
+                  : "text-white hover:bg-gray-700"
+              }`}
             >
               <span className="mr-3">{getIcon(item.icon)}</span>
               <span className="font-medium">{item.label}</span>
@@ -377,8 +364,9 @@ export const Sidebar = () => {
               </div>
             </div>
             <svg
-              className={`h-4 w-4 transition-transform ${showUserDropdown ? "rotate-180" : ""
-                }`}
+              className={`h-4 w-4 transition-transform ${
+                showUserDropdown ? "rotate-180" : ""
+              }`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -396,35 +384,11 @@ export const Sidebar = () => {
           {showUserDropdown && (
             <div className="absolute bottom-full left-0 right-0 w-full bg-white rounded-t-lg shadow-lg border border-gray-200 overflow-hidden">
               {/* Language Switcher */}
-<<<<<<< HEAD
-              <div className="border-b border-gray-200">
-                <button
-                  onClick={() => handleLanguageChange("vi")}
-                  className={`w-full flex items-center px-4 py-3 transition-colors ${
-                    i18n.language === "vi"
-                      ? "bg-blue-50 text-blue-600"
-                      : "text-gray-700 hover:bg-gray-50"
-                  }`}
-                >
-                  🇻🇳 Tiếng Việt
-                </button>
-                <button
-                  onClick={() => handleLanguageChange("en")}
-                  className={`w-full flex items-center px-4 py-3 transition-colors ${
-                    i18n.language === "en"
-                      ? "bg-blue-50 text-blue-600"
-                      : "text-gray-700 hover:bg-gray-50"
-                  }`}
-                >
-                  🇺🇸 English
-                </button>
-              </div>
-=======
+
               <LanguageSwitcher
                 variant="menu"
                 onLanguageChange={() => setShowUserDropdown(false)}
               />
->>>>>>> feature-demo-v2
 
               <button
                 onClick={handleProfile}

@@ -2,11 +2,12 @@ import { all, fork } from "redux-saga/effects";
 import { authSaga } from "./authSaga";
 import { userSaga } from "./userSaga";
 import { patientSaga } from "./patientSaga";
-import { testOrderSaga } from "./testOrderSaga";
 import { instrumentSaga } from "./instrumentSaga";
 import { roleSaga } from "./roleSaga";
 import { reagentSaga } from "./reagentSaga";
 import { testResultsSaga } from "./testResultsSaga";
+import { testOrdersSaga } from "./testOrderSaga";
+import { testOrderSaga } from "./reportSaga";
 
 export function* rootSaga() {
   yield all([
@@ -18,5 +19,6 @@ export function* rootSaga() {
     fork(roleSaga),
     fork(reagentSaga),
     fork(testResultsSaga),
+    fork(testOrdersSaga),
   ]);
 }
