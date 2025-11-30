@@ -77,6 +77,10 @@ const testOrderSlice = createSlice({
         (result) => result.id !== action.payload
       );
     },
+    fetchUserTestOrdersRequest: (state, action: PayloadAction<string>) => {
+      state.loading = true;
+      state.error = null;
+    },
   },
 });
 
@@ -93,5 +97,6 @@ export const {
   addTestResult,
   updateTestResult,
   deleteTestResult,
+  fetchUserTestOrdersRequest,
 } = testOrderSlice.actions;
 export default testOrderSlice.reducer;

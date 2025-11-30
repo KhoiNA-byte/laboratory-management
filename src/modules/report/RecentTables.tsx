@@ -6,7 +6,13 @@ interface RecentTablesProps {
   users: User[];
   testOrders: TestOrder[];
 }
-
+const roleColorMap: { [key: string]: string } = {
+  admin: "bg-red-100 text-red-800 border border-red-200",
+  lab_manager: "bg-purple-100 text-purple-800 border border-purple-200",
+  lab_user: "bg-blue-100 text-blue-800 border border-blue-200",
+  service_user: "bg-green-100 text-green-800 border border-green-200",
+  normal_user: "bg-gray-100 text-gray-800 border border-gray-200",
+};
 const RecentTables: React.FC<RecentTablesProps> = ({ users, testOrders }) => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -55,7 +61,12 @@ const RecentTables: React.FC<RecentTablesProps> = ({ users, testOrders }) => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                    <span
+                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        roleColorMap[user.role] ||
+                        "bg-gray-100 text-gray-800 border border-gray-200"
+                      }`}
+                    >
                       {user.role}
                     </span>
                   </td>
@@ -103,7 +114,7 @@ const RecentTables: React.FC<RecentTablesProps> = ({ users, testOrders }) => {
               {testOrders.map((order) => (
                 <tr key={order.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {order.id.toString().slice(-6)}
+                    {order.id.toString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span

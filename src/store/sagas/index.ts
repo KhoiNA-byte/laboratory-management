@@ -8,6 +8,8 @@ import { reagentSaga } from "./reagentSaga";
 import { testResultsSaga } from "./testResultsSaga";
 import { testOrdersSaga } from "./testOrderSaga";
 import { testOrderSaga } from "./reportSaga";
+import { userSagaProfile } from "./userProfileSaga";
+import { testOrderProfileSaga } from "./testOrderProfileSaga";
 
 export function* rootSaga() {
   yield all([
@@ -20,5 +22,7 @@ export function* rootSaga() {
     fork(reagentSaga),
     fork(testResultsSaga),
     fork(testOrdersSaga),
+    fork(userSagaProfile),
+    fork(testOrderProfileSaga),
   ]);
 }

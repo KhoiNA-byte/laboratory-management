@@ -77,6 +77,9 @@ const StatsGrid: React.FC<StatsGridProps> = ({ stats }) => {
           </span>
           <span className="text-yellow-600">Pending: {stats.pendingTests}</span>
         </div> */}
+        <div className="mt-4 text-sm text-gray-500">
+          Total test order in system
+        </div>
       </div>
 
       {/* Instruments Card */}

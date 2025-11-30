@@ -145,3 +145,41 @@ export interface ReportStats {
   activeUsers: number;
   inactiveUsers: number;
 }
+export interface User {
+  id: string;
+  userId: string;
+  name: string;
+  email: string;
+  phone: string;
+  gender: string;
+  role: string;
+  age: number;
+  address: string;
+  status: string;
+  lastLogin: string;
+  password?: string;
+}
+
+export interface UserState {
+  user: User | null;
+  loading: boolean;
+  error: string | null;
+}
+export interface TestOrder {
+  testType: string;
+  createdByUserId: number;
+  isDeleted: boolean;
+  note: string;
+  orderedAt: number;
+  priority: string;
+  run_id: string;
+  id: string;
+  userId: string;
+}
+
+export interface TestOrderState {
+  list: TestOrder[];
+  loading: boolean;
+  error: string | null;
+  updatingId?: string | null;
+}

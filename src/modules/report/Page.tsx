@@ -84,7 +84,7 @@ const ReportDashboard: React.FC = () => {
       <StatsGrid stats={stats} />
       <RecentTables
         users={users.slice(0, 5)}
-        testOrders={testOrders.slice(0, 5)}
+        testOrders={testOrders.slice(0, 7)}
       />
       <SystemStatus />
     </div>

@@ -24,6 +24,8 @@ export const store = configureStore({
     roles: roleReducer,
     reagents: reagentReducer,
     testResults: testResultsReducer,
+    user: userReducer,
+    testOrder: testOrderReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
