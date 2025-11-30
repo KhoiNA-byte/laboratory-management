@@ -53,53 +53,52 @@ const UpdateTestOrderPage: React.FC = () => {
   const [createdAt, setCreatedAt] = useState("");
   const [orderedAt, setOrderedAt] = useState("");
 
+  const fetchTestOrder = async () => {
+    if (!orderId) return;
+
+    try {
+      const result = await getTestOrderDetailById(orderId);
+
+      if (result.success && result.data) {
+        const data = result.data;
+
+        // Set form data
+        setFormData({
+          testType: data.testType || "",
+          status: data.status || "Pending",
+          priority: data.priority || "Routine",
+          note: data.note || "",
+          tester: data.testerName || "",
+        });
+
+        // Set patient info
+        setPatientInfo({
+          name: data.patientName,
+          email: data.patientEmail,
+          phone: data.patientPhone,
+          gender: data.patientGender,
+          age: data.patientAge,
+          address: data.patientAddress,
+        });
+
+        // Set timestamps
+        setCreatedAt(data.createdAt);
+        setOrderedAt(data.ordered);
+      } else {
+        alert("Failed to fetch test order details");
+        navigate("/admin/test-orders");
+      }
+    } catch (error) {
+      console.error("Error fetching test order:", error);
+      alert("An error occurred while fetching test order");
+      navigate("/admin/test-orders");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Fetch test order data
   useEffect(() => {
-    const fetchTestOrder = async () => {
-      if (!orderId) return;
-
-      try {
-        setLoading(true);
-        const result = await getTestOrderDetailById(orderId);
-
-        if (result.success && result.data) {
-          const data = result.data;
-
-          // Set form data
-          setFormData({
-            testType: data.testType || "",
-            status: data.status || "Pending",
-            priority: data.priority || "Routine",
-            note: data.note || "",
-            tester: data.testerName || "",
-          });
-
-          // Set patient info
-          setPatientInfo({
-            name: data.patientName,
-            email: data.patientEmail,
-            phone: data.patientPhone,
-            gender: data.patientGender,
-            age: data.patientAge,
-            address: data.patientAddress,
-          });
-
-          // Set timestamps
-          setCreatedAt(data.createdAt);
-          setOrderedAt(data.ordered);
-        } else {
-          alert("Failed to fetch test order details");
-          navigate("/admin/test-orders");
-        }
-      } catch (error) {
-        console.error("Error fetching test order:", error);
-        alert("An error occurred while fetching test order");
-        navigate("/admin/test-orders");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchTestOrder();
   }, [orderId, navigate]);
 
@@ -157,6 +156,7 @@ const UpdateTestOrderPage: React.FC = () => {
 
   const handleCancel = () => {
     navigate("/admin/test-orders");
+    alert("Test order update canceled");
   };
 
   if (loading) {
