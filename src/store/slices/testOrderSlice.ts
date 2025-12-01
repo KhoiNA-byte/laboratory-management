@@ -47,6 +47,10 @@ const testOrderSlice = createSlice({
         (order) => order.orderNumber !== action.payload
       );
     },
+    fetchUserTestOrdersRequest: (state, action: PayloadAction<string>) => {
+      state.loading = true;
+      state.error = null;
+    },
   },
 });
 

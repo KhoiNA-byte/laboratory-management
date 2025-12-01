@@ -49,14 +49,20 @@ export interface Instrument {
   id: string;
   name: string;
   model: string;
-  status: 'Active' | 'Maintenance' | 'Inactive';
+  status: "Active" | "Maintenance" | "Inactive";
   serialNumber: string;
   location: string;
   manufacturer: string;
   nextCalibration: string;
   calibrationDue: boolean;
-}
 
+  temperature?: string;
+  sampleVolume?: string;
+  firmwareVersion?: string;
+  port?: string;
+  encryption?: string;
+  ipAddress?: string;
+}
 
 export interface Reagent {
   id: string;
@@ -107,4 +113,73 @@ export interface AuditLog {
   action: string;
   timestamp: string;
   details: string;
+}
+
+export interface TestType {
+  id: string;
+  name: string;
+}
+
+export interface Role {
+  id: string;
+  name: string;
+  description?: string;
+  permissions?: string[];
+}
+
+export interface Event {
+  id: string;
+  type?: string;
+  action?: string;
+  userId?: string;
+  description?: string;
+  timestamp?: string;
+  createdAt?: string;
+}
+export interface ReportStats {
+  totalUsers: number;
+  totalRoles: number;
+  totalTestOrders: number;
+  totalInstruments: number;
+  totalReagents: number;
+  activeUsers: number;
+  inactiveUsers: number;
+}
+export interface User {
+  id: string;
+  userId: string;
+  name: string;
+  email: string;
+  phone: string;
+  gender: string;
+  role: string;
+  age: number;
+  address: string;
+  status: string;
+  lastLogin: string;
+  password?: string;
+}
+
+export interface UserState {
+  user: User | null;
+  loading: boolean;
+  error: string | null;
+}
+export interface TestOrder {
+  testType: string;
+  createdByUserId: number;
+  isDeleted: boolean;
+  note: string;
+  orderedAt: number;
+  priority: string;
+  run_id: string;
+  id: string;
+  userId: string;
+}
+
+export interface TestOrderState {
+  list: TestOrder[];
+  loading: boolean;
+  error: string | null;
+  updatingId?: string | null;
 }
