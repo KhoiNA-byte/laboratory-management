@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { useTranslation } from "react-i18next";
 import { RootState } from "../../store";
 import Uheader from "../../components/UsersPage/UHeader";
 import SummaryCard from "../../components/UsersPage/SummaryCard";
@@ -26,7 +25,8 @@ export const UsersPage = () => {
   } = useSelector((state: RootState) => state.users);
 
   const dispatch = useDispatch();
-  const { t } = useTranslation("common");
+
+  // Existing states
   const [searchTerm, setSearchTerm] = useState("");
   const [genderFilter, setGenderFilter] = useState("All Genders");
   const [ageFilter, setAgeFilter] = useState("All Ages");
@@ -37,7 +37,10 @@ export const UsersPage = () => {
   const [showViewModal, setShowViewModal] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
-  const growthPercentage = 8;
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [usersPerPage, setUsersPerPage] = useState(10);
 
   const [formData, setFormData] = useState({
     id: "",
@@ -77,11 +80,9 @@ export const UsersPage = () => {
       const matchesGender =
         genderFilter === "All Genders" || user.gender === genderFilter;
 
-      // Fix role filter - map "Administrator" filter to "admin" in data
       const matchesRole = (() => {
         if (roleFilter === "All Roles") return true;
 
-        // Map UI role names to database role names
         const roleMapping: { [key: string]: string } = {
           Administrator: "admin",
           "Lab Manager": "lab_manager",
@@ -120,6 +121,56 @@ export const UsersPage = () => {
     });
   }, [users, searchTerm, genderFilter, roleFilter, ageFilter]);
 
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+  const indexOfLastUser = currentPage * usersPerPage;
+  const indexOfFirstUser = indexOfLastUser - usersPerPage;
+  const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, genderFilter, roleFilter, ageFilter]);
+
+  // Pagination functions
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const goToPage = (pageNumber: number) => {
+    if (pageNumber >= 1 && pageNumber <= totalPages) {
+      setCurrentPage(pageNumber);
+    }
+  };
+
+  // Generate page numbers for pagination
+  const getPageNumbers = () => {
+    const pageNumbers = [];
+    const maxVisiblePages = 5;
+
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+    // Adjust start page if we're near the end
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      pageNumbers.push(i);
+    }
+
+    return pageNumbers;
+  };
+
   // Function to display role names
   const getDisplayRole = (role: string) => {
     const roleDisplayMap: { [key: string]: string } = {
@@ -132,14 +183,7 @@ export const UsersPage = () => {
     return roleDisplayMap[role] || role;
   };
 
-  const getDisplayGender = (gender: string) => {
-    if (gender === "Male") return t("usersPage.filters.male");
-    if (gender === "Female") return t("usersPage.filters.female");
-    return gender;
-  };
-
   const getRoleBadgeColor = (role: string) => {
-    // Use the display role for styling
     const displayRole = getDisplayRole(role);
     switch (displayRole) {
       case "Administrator":
@@ -203,9 +247,9 @@ export const UsersPage = () => {
       const newStatus = user.status === "active" ? "inactive" : "active";
 
       const confirmed = window.confirm(
-        user.status === "active"
-          ? t("usersPage.confirm.deactivateUser", { name: user.name })
-          : t("usersPage.confirm.activateUser", { name: user.name })
+        `Are you sure you want to ${
+          user.status === "active" ? "deactivate" : "activate"
+        } user ${user.name}?`
       );
 
       if (confirmed) {
@@ -245,6 +289,7 @@ export const UsersPage = () => {
   useEffect(() => {
     dispatch({ type: "roles/getRolesRequest" });
   }, [dispatch]);
+
   useEffect(() => {
     dispatch({ type: "users/getUsersRequest" });
   }, [dispatch]);
@@ -267,7 +312,7 @@ export const UsersPage = () => {
           status: "active",
         });
         dispatch(clearCreateSuccess());
-      });
+      }, 2000);
       return () => clearTimeout(timer);
     }
   }, [createSuccess, showCreateModal, dispatch]);
@@ -279,7 +324,7 @@ export const UsersPage = () => {
         setShowUpdateModal(false);
         setSelectedUser(null);
         dispatch(clearUpdateSuccess());
-      });
+      }, 2000);
       return () => clearTimeout(timer);
     }
   }, [updateSuccess, showUpdateModal, dispatch]);
@@ -304,30 +349,18 @@ export const UsersPage = () => {
   }
 
   return (
-      <div className="space-y-6">
-        <Uheader
-          title={t("pages.users.title")}
-          subtitle={t("pages.users.subtitle")}
-        />
+    <div className="space-y-6">
+      <Uheader />
       <SummaryCard
         totalUsers={filteredUsers.length}
         newThisMonth={12}
-          growthPercentage={growthPercentage}
-          totalLabel={t("usersPage.summaryCards.totalUsers")}
-          totalDescription={t("usersPage.summaryCards.activeRecords")}
-          newLabel={t("usersPage.summaryCards.newThisMonth")}
-          newDescription={t("usersPage.summaryCards.growthFromLastMonth", {
-            percentage: growthPercentage,
-          })}
+        growthPercentage={8}
       />
 
       {/* All Users Section */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-          <div className="p-6 border-b border-gray-200">
-            <BHeader
-              title={t("usersPage.allUsers.title")}
-              subtitle={t("usersPage.allUsers.subtitle")}
-            />
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div className="p-6 border-b border-gray-200">
+          <BHeader />
           <UsersFilters
             genderFilter={genderFilter}
             ageFilter={ageFilter}
@@ -341,13 +374,6 @@ export const UsersPage = () => {
               dispatch(clearMessages());
               setShowCreateModal(true);
             }}
-              searchPlaceholder={t("usersPage.filters.searchPlaceholder")}
-              newUserLabel={t("usersPage.filters.newUser")}
-              allGenderLabel={t("usersPage.filters.allGenders")}
-              maleLabel={t("usersPage.filters.male")}
-              femaleLabel={t("usersPage.filters.female")}
-              allAgesLabel={t("usersPage.filters.allAges")}
-              allRolesLabel={t("usersPage.filters.allRoles")}
           />
         </div>
 
@@ -356,42 +382,42 @@ export const UsersPage = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6">
-                    {t("usersPage.table.userName")}
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6">
-                    {t("usersPage.table.ageGender")}
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6">
-                    {t("usersPage.table.contact")}
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6">
-                    {t("usersPage.table.role")}
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6">
-                    {t("usersPage.table.status")}
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6">
-                    {t("usersPage.table.actions")}
-                  </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6">
+                  User Name
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6">
+                  Age/Gender
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6">
+                  Contact
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6">
+                  Role
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6">
+                  Status
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sm:px-6">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredUsers.length === 0 ? (
+              {currentUsers.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-4 py-8 text-center sm:px-6">
                     <div className="text-gray-500 text-sm">
                       {users.length === 0
-                        ? t("usersPage.table.noUsersFound")
-                        : t("usersPage.table.noUsersMatch")}
+                        ? "No users found"
+                        : "No users match your filters"}
                     </div>
                     <div className="text-gray-400 text-xs mt-1">
-                      {t("usersPage.table.tryAdjusting")}
+                      Try adjusting your search or filters
                     </div>
                   </td>
                 </tr>
               ) : (
-                filteredUsers.map((user) => (
+                currentUsers.map((user) => (
                   <tr key={user.id} className="hover:bg-gray-50">
                     <td className="px-4 py-4 whitespace-nowrap sm:px-6">
                       <div className="text-sm font-medium text-gray-900">
@@ -400,7 +426,7 @@ export const UsersPage = () => {
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap sm:px-6">
                       <div className="text-sm text-gray-900">
-                        {user.age} {t("usersPage.table.years")} / {getDisplayGender(user.gender)}
+                        {user.age} years / {user.gender}
                       </div>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap sm:px-6">
@@ -428,9 +454,7 @@ export const UsersPage = () => {
                           user.status || "active"
                         )}`}
                       >
-                        {user.status === "active"
-                          ? t("usersPage.table.active")
-                          : t("usersPage.table.inactive")}
+                        {user.status === "active" ? "Active" : "Inactive"}
                       </span>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm font-medium relative sm:px-6">
@@ -471,7 +495,7 @@ export const UsersPage = () => {
                                     d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                                   />
                                 </svg>
-                                {t("usersPage.table.viewProfile")}
+                                View Profile
                               </button>
 
                               <button
@@ -491,7 +515,7 @@ export const UsersPage = () => {
                                     d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                                   />
                                 </svg>
-                                {t("usersPage.table.editUser")}
+                                Edit User
                               </button>
 
                               <button
@@ -525,8 +549,8 @@ export const UsersPage = () => {
                                   )}
                                 </svg>
                                 {user.status === "active"
-                                  ? t("usersPage.table.deactivateUser")
-                                  : t("usersPage.table.activateUser")}
+                                  ? "Deactivate User"
+                                  : "Activate User"}
                               </button>
                             </div>
                           </div>
@@ -540,13 +564,80 @@ export const UsersPage = () => {
           </table>
         </div>
 
-        {/* Results count */}
+        {/* Pagination and Results count */}
         <div className="px-4 py-4 border-t border-gray-200 bg-gray-50 sm:px-6">
-          <div className="text-sm text-gray-600">
-            {t("usersPage.table.showing", {
-              count: filteredUsers.length,
-              total: users.length,
-            })}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            {/* Results info */}
+            <div className="text-sm text-gray-600">
+              Showing {indexOfFirstUser + 1} to{" "}
+              {Math.min(indexOfLastUser, filteredUsers.length)} of{" "}
+              {filteredUsers.length} users
+            </div>
+
+            {/* Items per page selector */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">Show:</span>
+              <select
+                value={usersPerPage}
+                onChange={(e) => {
+                  setUsersPerPage(Number(e.target.value));
+                  setCurrentPage(1); // Reset to first page
+                }}
+                className="border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+              </select>
+              <span className="text-sm text-gray-600">per page</span>
+            </div>
+
+            {/* Pagination controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center gap-1">
+                {/* Previous button */}
+                <button
+                  onClick={goToPreviousPage}
+                  disabled={currentPage === 1}
+                  className={`px-3 py-1 rounded-md text-sm font-medium ${
+                    currentPage === 1
+                      ? "text-gray-400 cursor-not-allowed"
+                      : "text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  Previous
+                </button>
+
+                {/* Page numbers */}
+                {getPageNumbers().map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => goToPage(page)}
+                    className={`px-3 py-1 rounded-md text-sm font-medium ${
+                      currentPage === page
+                        ? "bg-blue-600 text-white"
+                        : "text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+
+                {/* Next button */}
+                <button
+                  onClick={goToNextPage}
+                  disabled={currentPage === totalPages}
+                  className={`px-3 py-1 rounded-md text-sm font-medium ${
+                    currentPage === totalPages
+                      ? "text-gray-400 cursor-not-allowed"
+                      : "text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  Next
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
