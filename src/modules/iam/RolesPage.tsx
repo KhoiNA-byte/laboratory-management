@@ -26,6 +26,8 @@ export const RolesPage = () => {
   } = useSelector((state: RootState) => state.roles);
 
   const dispatch = useDispatch();
+
+  // Existing states
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
@@ -33,6 +35,10 @@ export const RolesPage = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [selectedRole, setSelectedRole] = useState<any>(null);
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rolesPerPage, setRolesPerPage] = useState(10);
 
   const [formData, setFormData] = useState({
     roleName: "",
@@ -66,6 +72,56 @@ export const RolesPage = () => {
       return matchesSearch && matchesStatus;
     });
   }, [roles, searchTerm, statusFilter]);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredRoles.length / rolesPerPage);
+  const indexOfLastRole = currentPage * rolesPerPage;
+  const indexOfFirstRole = indexOfLastRole - rolesPerPage;
+  const currentRoles = filteredRoles.slice(indexOfFirstRole, indexOfLastRole);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter]);
+
+  // Pagination functions
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const goToPage = (pageNumber: number) => {
+    if (pageNumber >= 1 && pageNumber <= totalPages) {
+      setCurrentPage(pageNumber);
+    }
+  };
+
+  // Generate page numbers for pagination
+  const getPageNumbers = () => {
+    const pageNumbers = [];
+    const maxVisiblePages = 5;
+
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+    // Adjust start page if we're near the end
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      pageNumbers.push(i);
+    }
+
+    return pageNumbers;
+  };
 
   // Function to display role names properly
   const getDisplayRoleName = (roleCode: string) => {
@@ -121,6 +177,14 @@ export const RolesPage = () => {
     const role = roles.find((r) => r.roleCode === roleCode);
     if (role) {
       setSelectedRole(role);
+      setUpdateFormData({
+        roleId: role.roleId,
+        roleName: role.roleName,
+        description: role.description,
+        permission: role.permission || [],
+        roleCode: role.roleCode,
+        status: role.status,
+      });
       setOpenDropdown(null);
       setShowUpdateModal(true);
     }
@@ -199,7 +263,7 @@ export const RolesPage = () => {
           status: "active",
         });
         dispatch(clearCreateSuccess());
-      });
+      }, 2000);
       return () => clearTimeout(timer);
     }
   }, [createSuccess, showCreateModal, dispatch]);
@@ -211,7 +275,7 @@ export const RolesPage = () => {
         setShowUpdateModal(false);
         setSelectedRole(null);
         dispatch(clearUpdateSuccess());
-      });
+      }, 2000);
       return () => clearTimeout(timer);
     }
   }, [updateSuccess, showUpdateModal, dispatch]);
@@ -220,7 +284,9 @@ export const RolesPage = () => {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        <span className="ml-4 text-gray-600">{t("rolesPage.table.loading")}</span>
+        <span className="ml-4 text-gray-600">
+          {t("rolesPage.table.loading")}
+        </span>
       </div>
     );
   }
@@ -353,7 +419,7 @@ export const RolesPage = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredRoles.length === 0 ? (
+              {currentRoles.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-4 py-8 text-center sm:px-6">
                     <div className="text-gray-500 text-sm">
@@ -362,7 +428,7 @@ export const RolesPage = () => {
                   </td>
                 </tr>
               ) : (
-                filteredRoles.map((role) => (
+                currentRoles.map((role) => (
                   <tr key={role.roleCode} className="hover:bg-gray-50">
                     <td className="px-4 py-4 whitespace-nowrap sm:px-6">
                       <div className="text-sm font-medium text-gray-900">
@@ -385,7 +451,9 @@ export const RolesPage = () => {
                           role.status || "active"
                         )}`}
                       >
-                        {role.status === "active" ? t("common.active") : t("common.inactive")}
+                        {role.status === "active"
+                          ? t("common.active")
+                          : t("common.inactive")}
                       </span>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm font-medium relative sm:px-6">
@@ -497,10 +565,80 @@ export const RolesPage = () => {
           </table>
         </div>
 
-        {/* Results count */}
+        {/* Pagination and Results count */}
         <div className="px-4 py-4 border-t border-gray-200 bg-gray-50 sm:px-6">
-          <div className="text-sm text-gray-600">
-            {t("rolesPage.table.showing", { count: filteredRoles.length, total: roles.length })}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            {/* Results info */}
+            <div className="text-sm text-gray-600">
+              Showing {indexOfFirstRole + 1} to{" "}
+              {Math.min(indexOfLastRole, filteredRoles.length)} of{" "}
+              {filteredRoles.length} roles
+            </div>
+
+            {/* Items per page selector */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">Show:</span>
+              <select
+                value={rolesPerPage}
+                onChange={(e) => {
+                  setRolesPerPage(Number(e.target.value));
+                  setCurrentPage(1); // Reset to first page
+                }}
+                className="border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+              </select>
+              <span className="text-sm text-gray-600">per page</span>
+            </div>
+
+            {/* Pagination controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center gap-1">
+                {/* Previous button */}
+                <button
+                  onClick={goToPreviousPage}
+                  disabled={currentPage === 1}
+                  className={`px-3 py-1 rounded-md text-sm font-medium ${
+                    currentPage === 1
+                      ? "text-gray-400 cursor-not-allowed"
+                      : "text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  Previous
+                </button>
+
+                {/* Page numbers */}
+                {getPageNumbers().map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => goToPage(page)}
+                    className={`px-3 py-1 rounded-md text-sm font-medium ${
+                      currentPage === page
+                        ? "bg-blue-600 text-white"
+                        : "text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+
+                {/* Next button */}
+                <button
+                  onClick={goToNextPage}
+                  disabled={currentPage === totalPages}
+                  className={`px-3 py-1 rounded-md text-sm font-medium ${
+                    currentPage === totalPages
+                      ? "text-gray-400 cursor-not-allowed"
+                      : "text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  Next
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
