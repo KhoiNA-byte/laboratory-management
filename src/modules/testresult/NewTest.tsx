@@ -2,9 +2,11 @@
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
-import { useTranslation } from "react-i18next";
 import { AppDispatch, RootState } from "../../store";
-import { runTestRequest,UsedReagentLocal } from "../../store/slices/testResultsSlice";
+import {
+  runTestRequest,
+  UsedReagentLocal,
+} from "../../store/slices/testResultsSlice";
 import {
   Instrument,
   TestOrder,
@@ -12,8 +14,7 @@ import {
   CbcParam,
   TestResultRowCreate,
 } from "../../store/slices/testResultsSlice";
-
-const API_BASE = "https://69085724b49bea95fbf32f71.mockapi.io";
+import { API_BASE_URL } from "../../services/apiConfig";
 
 
 export default function NewTest({
@@ -25,7 +26,6 @@ export default function NewTest({
   onClose: () => void;
   onCreated?: (runIdOrResultId: string | number) => void;
 }) {
-  const { t } = useTranslation("common");
   const dispatch = useDispatch<AppDispatch>();
   const runState = useSelector((s: RootState) => s.testResults);
   const running = runState.running;
@@ -33,7 +33,6 @@ export default function NewTest({
   const lastResultId = runState.lastResultId;
   const lastRunRows = runState.lastRunRows;
 
-  // local
   const [availableOrders, setAvailableOrders] = useState<TestOrder[]>([]);
   const [paramsAll, setParamsAll] = useState<CbcParam[]>([]);
   const [selectedOrderId, setSelectedOrderId] = useState<string | number>("");
@@ -47,9 +46,7 @@ export default function NewTest({
     string | number | ""
   >("");
 
-  // store full reagents to resolve by id/name
   const [allReagents, setAllReagents] = useState<Reagent[]>([]);
-  // resolved reagents for selected instrument shown to user
   const [resolvedReagents, setResolvedReagents] = useState<UsedReagentLocal[]>(
     []
   );
@@ -61,20 +58,18 @@ export default function NewTest({
     string | number | null
   >(null);
 
-  // initial load when modal opens
   useEffect(() => {
     if (!isOpen) return;
     setLoading(true);
     (async () => {
       try {
         const [ordersRes, paramsRes, instRes, reagentsRes] = await Promise.all([
-          axios.get(`${API_BASE}/test_orders`),
-          axios.get(`${API_BASE}/cbc_parameters`),
-          axios.get(`${API_BASE}/instruments`),
-          axios.get(`${API_BASE}/reagents`),
+          axios.get(`${API_BASE_URL}/test_orders`),
+          axios.get(`${API_BASE_URL}/cbc_parameters`),
+          axios.get(`${API_BASE_URL}/instruments`),
+          axios.get(`${API_BASE_URL}/reagents`),
         ]);
 
-        // only orders without run_id
         const orders: TestOrder[] = (ordersRes.data || []).filter((o: any) => {
           return (
             o.run_id === undefined ||
@@ -92,7 +87,6 @@ export default function NewTest({
           const defaultOrder = orders[0];
           setSelectedOrderId(defaultOrder.id);
 
-          // find instruments that support that order.testType
           const testType = defaultOrder.testType;
           const filtered = (instRes.data || []).filter((ins: any) =>
             Array.isArray(ins.supportedTest)
@@ -102,14 +96,12 @@ export default function NewTest({
           setSuggestedInstruments(filtered);
         }
       } catch (err) {
-        // ignore for now
       } finally {
         setLoading(false);
       }
     })();
   }, [isOpen]);
 
-  // when selectedOrderId changes: update suggested instruments (in case different testType)
   useEffect(() => {
     if (!selectedOrderId) {
       setSuggestedInstruments([]);
@@ -118,10 +110,10 @@ export default function NewTest({
     (async () => {
       try {
         const oRes = await axios.get(
-          `${API_BASE}/test_orders/${selectedOrderId}`
+          `${API_BASE_URL}/test_orders/${selectedOrderId}`
         );
         const order: TestOrder = oRes.data;
-        const instAll = (await axios.get(`${API_BASE}/instruments`)).data || [];
+        const instAll = (await axios.get(`${API_BASE_URL}/instruments`)).data || [];
         const filtered = (instAll || []).filter((ins: any) =>
           Array.isArray(ins.supportedTest)
             ? ins.supportedTest.includes(order.testType)
@@ -134,7 +126,6 @@ export default function NewTest({
     })();
   }, [selectedOrderId]);
 
-  // when instrument selected: resolve supportedReagents -> show reagents with usage_per_run and allow edit
   useEffect(() => {
     if (!selectedInstrumentId) {
       setResolvedReagents([]);
@@ -143,15 +134,14 @@ export default function NewTest({
     (async () => {
       try {
         const instRes = await axios.get(
-          `${API_BASE}/instruments/${selectedInstrumentId}`
+          `${API_BASE_URL}/instruments/${selectedInstrumentId}`
         );
         const inst: Instrument = instRes.data || {};
         const reagentRefs: any[] = inst.supportedReagents ?? [];
 
-        // ensure we have all reagents (from state) else fetch
         let reagentsPool = allReagents;
         if (!reagentsPool || reagentsPool.length === 0) {
-          const r = await axios.get(`${API_BASE}/reagents`);
+          const r = await axios.get(`${API_BASE_URL}/reagents`);
           reagentsPool = r.data || [];
           setAllReagents(reagentsPool);
         }
@@ -160,7 +150,7 @@ export default function NewTest({
         for (const rid of reagentRefs) {
           let found = null;
           try {
-            const rr = await axios.get(`${API_BASE}/reagents/${rid}`);
+            const rr = await axios.get(`${API_BASE_URL}/reagents/${rid}`);
             found = rr?.data ?? null;
           } catch {
             found = reagentsPool.find(
@@ -197,12 +187,8 @@ export default function NewTest({
     );
   };
 
-  // dispatch action to create test
   const handleCreateTest = () => {
-    if (!selectedOrderId) return alert(t("modals.createTest.validation.selectOrder"));
-    if (!selectedInstrumentId) return alert(t("modals.createTest.validation.selectInstrument"));
-
-    // build usedReagents payload
+   
     const used = resolvedReagents.map((r) => ({
       id: r.id,
       amountUsed: Number(r.amountUsed || 0),
@@ -219,7 +205,6 @@ export default function NewTest({
     );
   };
 
-  // when saga finishes, populate preview (logic kept but preview UI removed)
   useEffect(() => {
     if (lastRunId && lastResultId) {
       setCreatedResultIdLocal(lastResultId);
@@ -235,9 +220,7 @@ export default function NewTest({
       }));
       setCreatedRowsLocal(mapped);
       if (onCreated) onCreated(lastRunId as string);
-      // keep modal open to show preview (preview UI removed per request)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lastRunId, lastResultId, lastRunRows]);
 
   if (!isOpen) return null;
@@ -247,21 +230,21 @@ export default function NewTest({
       <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-auto">
         <div className="flex items-center justify-between p-6 border-b">
           <div>
-            <h2 className="text-xl font-semibold">{t("modals.createTest.title")}</h2>
+            <h2 className="text-xl font-semibold">Create New Test</h2>
             <p className="text-sm text-gray-600">
-              {t("modals.createTest.subtitle")}
+              Auto-generate results from reagents & instrument
             </p>
           </div>
 
           <div className="flex items-center gap-3">
-            <label className="text-sm">{t("modals.createTest.sex")}</label>
+            <label className="text-sm">Sex</label>
             <select
               value={sex}
               onChange={(e) => setSex(e.target.value as any)}
               className="border rounded px-2 py-1 text-sm"
             >
-              <option value="Male">{t("modals.createUser.genderOptions.male")}</option>
-              <option value="Female">{t("modals.createUser.genderOptions.female")}</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
             </select>
             <button
               onClick={() => {
@@ -271,7 +254,7 @@ export default function NewTest({
               }}
               className="px-3 py-1 text-sm border rounded"
             >
-              {t("common.close")}
+              Close
             </button>
           </div>
         </div>
@@ -279,13 +262,13 @@ export default function NewTest({
         <div className="p-6 space-y-4">
           <div>
             <label className="text-sm font-medium block mb-2">
-              {t("modals.createTest.selectTestOrder")}
+              Select Test Order (no run_id yet)
             </label>
             {loading ? (
-              <div className="text-sm text-gray-500">{t("modals.createTest.loading")}</div>
+              <div className="text-sm text-gray-500">Loading...</div>
             ) : availableOrders.length === 0 ? (
               <div className="text-sm text-gray-500">
-                {t("modals.createTest.noOrdersAvailable")}
+                No test orders available (all have run_id/results).
               </div>
             ) : (
               <select
@@ -305,11 +288,11 @@ export default function NewTest({
 
           <div>
             <label className="text-sm font-medium block mb-2">
-              {t("modals.createTest.chooseInstrument")}
+              Choose Instrument (supports this order's testType)
             </label>
             {suggestedInstruments.length === 0 ? (
               <div className="text-sm text-gray-500">
-                {t("modals.createTest.noInstrumentMatched")}
+                No instrument matched — cannot create test
               </div>
             ) : (
               <div>
@@ -318,7 +301,7 @@ export default function NewTest({
                   onChange={(e) => setSelectedInstrumentId(e.target.value)}
                   className="w-full border rounded px-3 py-2 text-sm"
                 >
-                  <option value="">{t("modals.createTest.selectInstrument")}</option>
+                  <option value="">-- Select instrument --</option>
                   {suggestedInstruments.map((it) => (
                     <option key={String(it.id)} value={String(it.id)}>
                       {it.name ?? String(it.id)}
@@ -327,7 +310,7 @@ export default function NewTest({
                 </select>
 
                 <div className="text-xs text-gray-500 mt-2">
-                  {t("modals.createTest.usingReagents")}{" "}
+                  Using reagents:{" "}
                   {resolvedReagents.length
                     ? resolvedReagents.map((r) => r.name ?? r.id).join(", ")
                     : "—"}
@@ -340,7 +323,7 @@ export default function NewTest({
           {resolvedReagents.length > 0 && (
             <div>
               <label className="text-sm font-medium block mb-2">
-                {t("modals.createTest.reagentsUsage")}
+                Reagents & Usage (editable)
               </label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {resolvedReagents.map((r) => (
@@ -352,12 +335,12 @@ export default function NewTest({
                           {r.unit ?? "-"}
                         </div>
                         <div className="text-xs text-gray-500">
-                          {t("modals.createTest.defaultUsage", { amount: r.usage_per_run ?? 0, unit: r.unit ?? "" })}
+                          Default usage: {r.usage_per_run ?? 0} {r.unit ?? ""}
                         </div>
                       </div>
                       <div className="w-32">
                         <label className="text-xs text-gray-600">
-                          {t("modals.createTest.amountToUse")}
+                          Amount to use
                         </label>
                         <input
                           type="number"
@@ -390,14 +373,14 @@ export default function NewTest({
                 }}
                 className="px-4 py-2 border rounded"
               >
-                {t("common.cancel")}
+                Cancel
               </button>
               <button
                 onClick={handleCreateTest}
                 disabled={running || !selectedOrderId || !selectedInstrumentId}
                 className="px-4 py-2 bg-blue-600 text-white rounded"
               >
-                {running ? t("modals.createTest.creating") : t("modals.createTest.createTest")}
+                {running ? "Creating..." : "Create Test"}
               </button>
             </div>
           </div>
