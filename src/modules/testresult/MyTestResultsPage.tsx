@@ -15,7 +15,6 @@ import {
   fetchDetailRequest,
   ListRow,
 } from "../../store/slices/testResultsSlice";
-import { TestParameter } from "../../types/testResult";
 
 const MyTestResultsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -36,9 +35,7 @@ const MyTestResultsPage: React.FC = () => {
   useEffect(() => {
     dispatch(fetchListRequest());
   }, [dispatch]);
-  useEffect(() => {
-    console.log("DEBUG testResults.list:", list);
-  }, [list]);
+
   const filteredRows = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
     return list.filter((r) => {
@@ -62,32 +59,23 @@ const MyTestResultsPage: React.FC = () => {
 
   const onNewTestCreated = (runIdOrResultId: string | number) => {
     setIsNewOpen(false);
-    // refresh then navigate
     dispatch(fetchListRequest());
     navigate(`/admin/test-results/${String(runIdOrResultId)}`, {
       state: { background: location },
     });
   };
 
-  // IMPORTANT: only navigate if we actually have a runId (result ready)
   const handleView = async (row: ListRow) => {
     const orderNumber = row.runId ?? row.id;
     if (!orderNumber) {
-      // defensive: shouldn't happen if button is disabled in UI
       window.alert("Cannot view: this test is still pending (no result yet).");
       return;
     }
 
     try {
-      // Set loading state
       setFetchingRowId(row.id);
 
-      // Fetch detail để lấy parameters
       dispatch(fetchDetailRequest(String(orderNumber)));
-
-      // Wait for detail in saga then get from store
-      // For now, navigate immediately and let TestResultDetailPage handle the fetch
-      // But we'll pass empty parameters first, then TestResultDetailPage will use its own fetch
 
       navigate(`/admin/test-results/${String(orderNumber)}`, {
         state: {
@@ -107,8 +95,6 @@ const MyTestResultsPage: React.FC = () => {
       setFetchingRowId(null);
     }
   };
-
-  const handleExport = (id: string) => alert(`Exporting ${id} (mock)`);
 
   const handleDelete = (id: string | number) => {
     if (!window.confirm("Are you sure you want to delete this result?")) return;
@@ -180,26 +166,6 @@ const MyTestResultsPage: React.FC = () => {
             </div>
 
             <div className="flex justify-end gap-2">
-              {/* <button
-                onClick={() => dispatch(fetchListRequest())}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center gap-2"
-              >
-                <svg
-                  className="h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                  />
-                </svg>
-                Sync-Test
-              </button> */}
-
               <button
                 onClick={handleNew}
                 className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center gap-2"
@@ -258,12 +224,12 @@ const MyTestResultsPage: React.FC = () => {
             <div className="p-6 text-center text-gray-500">Loading...</div>
           ) : (
             <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+              <thead className="bg-gray-50 ">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className=" px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     TestOrder ID
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3  text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Patient
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -365,12 +331,7 @@ const MyTestResultsPage: React.FC = () => {
                             "View"
                           )}
                         </button>
-                        <button
-                          onClick={() => handleExport(r.id)}
-                          className="px-3 py-1 border border-gray-200 rounded-md text-sm hover:shadow ml-2"
-                        >
-                          Export
-                        </button>
+
                         <button
                           onClick={() => handleDelete(r.runId ?? r.id)}
                           className="px-3 py-1 border border-red-200 rounded-md text-sm hover:shadow ml-2 text-red-600"

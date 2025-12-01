@@ -3,7 +3,10 @@ import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../store";
-import { runTestRequest,UsedReagentLocal } from "../../store/slices/testResultsSlice";
+import {
+  runTestRequest,
+  UsedReagentLocal,
+} from "../../store/slices/testResultsSlice";
 import {
   Instrument,
   TestOrder,
@@ -11,8 +14,7 @@ import {
   CbcParam,
   TestResultRowCreate,
 } from "../../store/slices/testResultsSlice";
-
-const API_BASE = "https://69085724b49bea95fbf32f71.mockapi.io";
+import { API_BASE_URL } from "../../services/apiConfig";
 
 
 export default function NewTest({
@@ -31,7 +33,6 @@ export default function NewTest({
   const lastResultId = runState.lastResultId;
   const lastRunRows = runState.lastRunRows;
 
-  // local
   const [availableOrders, setAvailableOrders] = useState<TestOrder[]>([]);
   const [paramsAll, setParamsAll] = useState<CbcParam[]>([]);
   const [selectedOrderId, setSelectedOrderId] = useState<string | number>("");
@@ -45,9 +46,7 @@ export default function NewTest({
     string | number | ""
   >("");
 
-  // store full reagents to resolve by id/name
   const [allReagents, setAllReagents] = useState<Reagent[]>([]);
-  // resolved reagents for selected instrument shown to user
   const [resolvedReagents, setResolvedReagents] = useState<UsedReagentLocal[]>(
     []
   );
@@ -59,20 +58,18 @@ export default function NewTest({
     string | number | null
   >(null);
 
-  // initial load when modal opens
   useEffect(() => {
     if (!isOpen) return;
     setLoading(true);
     (async () => {
       try {
         const [ordersRes, paramsRes, instRes, reagentsRes] = await Promise.all([
-          axios.get(`${API_BASE}/test_orders`),
-          axios.get(`${API_BASE}/cbc_parameters`),
-          axios.get(`${API_BASE}/instruments`),
-          axios.get(`${API_BASE}/reagents`),
+          axios.get(`${API_BASE_URL}/test_orders`),
+          axios.get(`${API_BASE_URL}/cbc_parameters`),
+          axios.get(`${API_BASE_URL}/instruments`),
+          axios.get(`${API_BASE_URL}/reagents`),
         ]);
 
-        // only orders without run_id
         const orders: TestOrder[] = (ordersRes.data || []).filter((o: any) => {
           return (
             o.run_id === undefined ||
@@ -90,7 +87,6 @@ export default function NewTest({
           const defaultOrder = orders[0];
           setSelectedOrderId(defaultOrder.id);
 
-          // find instruments that support that order.testType
           const testType = defaultOrder.testType;
           const filtered = (instRes.data || []).filter((ins: any) =>
             Array.isArray(ins.supportedTest)
@@ -100,14 +96,12 @@ export default function NewTest({
           setSuggestedInstruments(filtered);
         }
       } catch (err) {
-        // ignore for now
       } finally {
         setLoading(false);
       }
     })();
   }, [isOpen]);
 
-  // when selectedOrderId changes: update suggested instruments (in case different testType)
   useEffect(() => {
     if (!selectedOrderId) {
       setSuggestedInstruments([]);
@@ -116,10 +110,10 @@ export default function NewTest({
     (async () => {
       try {
         const oRes = await axios.get(
-          `${API_BASE}/test_orders/${selectedOrderId}`
+          `${API_BASE_URL}/test_orders/${selectedOrderId}`
         );
         const order: TestOrder = oRes.data;
-        const instAll = (await axios.get(`${API_BASE}/instruments`)).data || [];
+        const instAll = (await axios.get(`${API_BASE_URL}/instruments`)).data || [];
         const filtered = (instAll || []).filter((ins: any) =>
           Array.isArray(ins.supportedTest)
             ? ins.supportedTest.includes(order.testType)
@@ -132,7 +126,6 @@ export default function NewTest({
     })();
   }, [selectedOrderId]);
 
-  // when instrument selected: resolve supportedReagents -> show reagents with usage_per_run and allow edit
   useEffect(() => {
     if (!selectedInstrumentId) {
       setResolvedReagents([]);
@@ -141,15 +134,14 @@ export default function NewTest({
     (async () => {
       try {
         const instRes = await axios.get(
-          `${API_BASE}/instruments/${selectedInstrumentId}`
+          `${API_BASE_URL}/instruments/${selectedInstrumentId}`
         );
         const inst: Instrument = instRes.data || {};
         const reagentRefs: any[] = inst.supportedReagents ?? [];
 
-        // ensure we have all reagents (from state) else fetch
         let reagentsPool = allReagents;
         if (!reagentsPool || reagentsPool.length === 0) {
-          const r = await axios.get(`${API_BASE}/reagents`);
+          const r = await axios.get(`${API_BASE_URL}/reagents`);
           reagentsPool = r.data || [];
           setAllReagents(reagentsPool);
         }
@@ -158,7 +150,7 @@ export default function NewTest({
         for (const rid of reagentRefs) {
           let found = null;
           try {
-            const rr = await axios.get(`${API_BASE}/reagents/${rid}`);
+            const rr = await axios.get(`${API_BASE_URL}/reagents/${rid}`);
             found = rr?.data ?? null;
           } catch {
             found = reagentsPool.find(
@@ -195,12 +187,8 @@ export default function NewTest({
     );
   };
 
-  // dispatch action to create test
   const handleCreateTest = () => {
-    if (!selectedOrderId) return alert("Chọn test order trước");
-    if (!selectedInstrumentId) return alert("Chọn instrument để chạy test");
-
-    // build usedReagents payload
+   
     const used = resolvedReagents.map((r) => ({
       id: r.id,
       amountUsed: Number(r.amountUsed || 0),
@@ -217,7 +205,6 @@ export default function NewTest({
     );
   };
 
-  // when saga finishes, populate preview (logic kept but preview UI removed)
   useEffect(() => {
     if (lastRunId && lastResultId) {
       setCreatedResultIdLocal(lastResultId);
@@ -233,9 +220,7 @@ export default function NewTest({
       }));
       setCreatedRowsLocal(mapped);
       if (onCreated) onCreated(lastRunId as string);
-      // keep modal open to show preview (preview UI removed per request)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lastRunId, lastResultId, lastRunRows]);
 
   if (!isOpen) return null;

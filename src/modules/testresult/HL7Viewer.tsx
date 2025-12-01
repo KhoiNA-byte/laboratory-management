@@ -6,12 +6,10 @@ import {
   DocumentDuplicateIcon,
 } from "@heroicons/react/24/outline";
 import { TestParameter } from "../../types/testResult";
-import { exportExcelFile, exportPdfFile } from "../../utils/exportFile";
+import { exportExcelFile, exportPdfFile } from "../../io/exportFile";
 
 function detectObxFlag(line: string): "High" | "Low" | "Normal" {
-  // Simple heuristics:
-  // - HL7 OBX has a result status field like |H| or |L| (commonly field 8 or 11)
-  // - also some messages append textual "High" / "Low" in trailing fields
+  
   const up = line.toUpperCase();
   if (/(\|H\|)|\bHIGH\b/.test(up)) return "High";
   if (/(\|L\|)|\bLOW\b/.test(up)) return "Low";
@@ -19,7 +17,6 @@ function detectObxFlag(line: string): "High" | "Low" | "Normal" {
 }
 
 export default function HL7Viewer({
-  // Basic info
   testOrderId,
   patient,
   date,
@@ -27,9 +24,7 @@ export default function HL7Viewer({
   status,
   sex,
   orderNumber,
-  // Parameters
   parameters,
-  // HL7
   rawHL7,
   onClose,
 }: {
@@ -49,10 +44,8 @@ export default function HL7Viewer({
   const [onlyObx, setOnlyObx] = useState(false);
   const [showDownloadMenu, setShowDownloadMenu] = useState(false);
 
-  // prepare lines and metadata
   const lines = useMemo(() => {
     if (!rawHL7) return [];
-    // split preserving original line breaks - trim trailing newlines for tidy display
     return rawHL7
       .replace(/\r/g, "")
       .split("\n")
@@ -263,7 +256,7 @@ export default function HL7Viewer({
                 <button
                   onClick={() => setHighlightAbnormal((v) => !v)}
                   className={`w-full text-left px-3 py-2 rounded ${
-                    highlightAbnormal ? "bg-gray-600" : "bg-gray-50"
+                    highlightAbnormal ? "bg-gray-200 font-bold" : "bg-gray-50"
                   } text-xs`}
                 >
                   Highlight ABNORMAL (H/L)
@@ -274,7 +267,7 @@ export default function HL7Viewer({
                     setOnlyObx(true);
                   }}
                   className={`w-full text-left px-3 py-2 rounded ${
-                    onlyObx ? "bg-gray-600" : "bg-gray-50"
+                    onlyObx ? "bg-gray-200 font-bold" : "bg-gray-50"
                   } text-xs`}
                 >
                   Show only OBX lines
@@ -287,7 +280,7 @@ export default function HL7Viewer({
                     setSearch("");
                   }}
                   className={`w-full text-left px-3 py-2 rounded ${
-                    onlyObx ? "bg-gray-50" : "bg-gray-600"
+                    onlyObx ? "bg-gray-50" : "bg-gray-200 font-bold"
                   } text-xs`}
                 >
                   Show all lines

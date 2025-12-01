@@ -21,7 +21,6 @@ export default function TestResultDetailPage(): JSX.Element {
   const location = useLocation();
   const dispatch = useDispatch<AppDispatch>();
 
-  // Nhận basic info từ MyTestResultsPage (nếu có)
   const stateData = location.state as
     | {
         background?: Location;
@@ -40,7 +39,6 @@ export default function TestResultDetailPage(): JSX.Element {
   );
 
   const [rowsState, setRowsState] = useState<any[]>([]);
-  // other local UI states...
   const [isReviewing, setIsReviewing] = useState(false);
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const [isHL7Open, setIsHL7Open] = useState(false);
@@ -56,7 +54,6 @@ export default function TestResultDetailPage(): JSX.Element {
     dispatch(fetchDetailRequest(orderNumber));
   }, [orderNumber, dispatch, navigate]);
 
-  // when detail loaded, map to rowsState and meta
   useEffect(() => {
     if (!detail) {
       setRowsState([]);
@@ -68,13 +65,10 @@ export default function TestResultDetailPage(): JSX.Element {
     setComments(detail.comments ?? []);
   }, [detail]);
 
-  // handler when CommentsPage changes comments list
   const handleChangeComments = (updatedComments: CommentItem[]) => {
     setComments(updatedComments);
-    // persist into backend: use run_id from detail (must exist)
     const runId = detail?.run_id;
     if (!runId) {
-      // if no runId, try to use orderNumber as run id
       alert("Cannot persist comments: missing run id");
       return;
     }
@@ -266,9 +260,7 @@ export default function TestResultDetailPage(): JSX.Element {
                     <div className="text-sm text-gray-600">By</div>
                     <div className="mt-3 text-sm font-medium">
                       {reviewedBy}
-                      {reviewedAt
-                        ? ` • ${new Date(reviewedAt).toLocaleString()}`
-                        : ""}
+                      
                     </div>
                   </div>
 
@@ -277,13 +269,6 @@ export default function TestResultDetailPage(): JSX.Element {
                       Actions
                     </h4>
                     <div className="space-y-3">
-                      <button
-                        type="button"
-                        onClick={() => alert("Downloading PDF (placeholder)")}
-                        className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 border rounded-lg text-sm text-gray-700 hover:shadow"
-                      >
-                        <ArrowDownTrayIcon className="h-4 w-4" /> Download PDF
-                      </button>
                       <button
                         type="button"
                         onClick={() => setIsHL7Open(true)}
@@ -359,7 +344,6 @@ export default function TestResultDetailPage(): JSX.Element {
 
       {isHL7Open && detail?.hl7_raw !== undefined && (
         <HL7Viewer
-          // Basic info - ưu tiên từ stateData, fallback về detail
           testOrderId={
             stateData?.testOrderId ?? String(detail.run_id ?? orderNumber)
           }
@@ -369,7 +353,6 @@ export default function TestResultDetailPage(): JSX.Element {
           status={stateData?.status ?? "Completed"}
           orderNumber={String(detail.run_id ?? orderNumber)}
           sex={detail.sex ?? "Unknown"}
-          // Parameters từ rowsState
           parameters={rowsState.map(
             (r): TestParameter => ({
               parameter: r.parameter || "",
@@ -381,7 +364,6 @@ export default function TestResultDetailPage(): JSX.Element {
               appliedEvaluate: r.appliedEvaluate,
             })
           )}
-          // Raw HL7
           rawHL7={detail.hl7_raw ?? ""}
           onClose={() => setIsHL7Open(false)}
         />
