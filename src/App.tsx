@@ -51,19 +51,16 @@ import { QuarantinePage } from "./modules/monitoring/QuarantinePage";
 import { InstrumentLogsPage } from "./modules/monitoring/InstrumentLogsPage";
 
 // Patient Module
-import { PatientsPage } from "./modules/patient/PatientsPage";
-import { PatientDetailsPage } from "./modules/patient/PatientDetailsPage";
-import { EditPatientPage } from "./modules/patient/EditPatientPage";
-
+import { PatientsPage } from "./modules/patient/patientPage";
+import { PatientDetailsPage } from "./modules/patient/patientDetails";
+import { EditPatientPage } from "./modules/patient/editPatient";
 // Audit Module
 import { AuditLogsPage } from "./modules/audit/AuditLogsPage";
-import { ReportsPage } from "./modules/audit/ReportsPage";
 
 // Community Module
 import { CommunityPage } from "./modules/community/CommunityPage";
 import UserProfilePage from "./modules/profile/UserProfilePage";
-import ReportsPage1 from "./modules/report/Page";
-
+import ReportDashboard from "./modules/report/page";
 function AppRoutesInner() {
   const location = useLocation();
   const background = location.state && location.state.background;
@@ -215,7 +212,7 @@ function AppRoutesInner() {
               </ProtectedRoute>
             }
           />
-          
+
           <Route
             path="flagging-rules"
             element={
@@ -273,7 +270,7 @@ function AppRoutesInner() {
               </ProtectedRoute>
             }
           />
-          
+
           <Route
             path="my-test-results"
             element={
@@ -386,7 +383,7 @@ function AppRoutesInner() {
                 allowedPermissions={[PERMISSIONS.REPORTS_READ]}
                 fallbackPath="/unauthorized"
               >
-                <ReportsPage1 />
+                <ReportDashboard />
               </ProtectedRoute>
             }
           />

@@ -1,5 +1,6 @@
-// --- File: src/store/slices/testResultsSlice.ts (UPDATED: add userId on TestOrder type & keep open index signatures)
+// src/store/slices/testResultsSlice.ts
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+
 export type UsedReagentLocal = {
   id: string | number;
   name?: string;
@@ -53,6 +54,7 @@ export type TestResultRowCreate = {
   deviation?: string;
   unit?: string;
 };
+
 /** Comments shape used across app (match CommentsPage) */
 export type CommentItem = {
   id: string;
@@ -109,6 +111,7 @@ export type TestResultDetail = {
   run_id?: string;
   hl7_raw?: string;
 };
+
 export type CbcParam = {
   id: string | number;
   name?: string;
@@ -120,19 +123,27 @@ export type CbcParam = {
   unit?: string;
   [k: string]: any;
 };
-interface RunTestPayload {
+
+type RunTestPayload = {
   orderId: string | number;
   instrumentId: string | number;
   sex?: "Male" | "Female";
   usedReagents?: { id: string | number; amountUsed: number; unit?: string }[];
-}
+};
 
-interface UpdateCommentsPayload {
+type UpdateCommentsPayload = {
   runId: string;
   comments: CommentItem[];
-}
+};
 
-interface TestResultsState {
+type UpdateReviewPayload = {
+  runId: string | number;
+  reviewedBy: string;
+  reviewedAt: string; // ISO
+  appliedEvaluate?: string;
+};
+
+type TestResultsState = {
   list: ListRow[];
   loadingList: boolean;
   listError: string | null;
@@ -150,9 +161,12 @@ interface TestResultsState {
   updatingComments: boolean;
   updateCommentsError: string | null;
 
+  updatingReview: boolean;
+  updateReviewError: string | null;
+
   deleting: boolean;
   deleteError: string | null;
-}
+};
 
 const initialState: TestResultsState = {
   list: [],
@@ -172,6 +186,9 @@ const initialState: TestResultsState = {
   updatingComments: false,
   updateCommentsError: null,
 
+  updatingReview: false,
+  updateReviewError: null,
+
   deleting: false,
   deleteError: null,
 };
@@ -180,6 +197,7 @@ const slice = createSlice({
   name: "testResults",
   initialState,
   reducers: {
+    // List
     fetchListRequest(state) {
       state.loadingList = true;
       state.listError = null;
@@ -193,6 +211,7 @@ const slice = createSlice({
       state.listError = action.payload;
     },
 
+    // Run test
     runTestRequest(state, action: PayloadAction<RunTestPayload>) {
       state.running = true;
       state.runError = null;
@@ -218,6 +237,7 @@ const slice = createSlice({
       state.runError = action.payload;
     },
 
+    // Detail
     fetchDetailRequest(state, action: PayloadAction<string>) {
       state.loadingDetail = true;
       state.detailError = null;
@@ -232,23 +252,31 @@ const slice = createSlice({
       state.detailError = action.payload;
     },
 
+    // Comments
     updateCommentsRequest(state, action: PayloadAction<UpdateCommentsPayload>) {
+      state.updatingComments = true;
       state.updateCommentsError = null;
     },
     updateCommentsSuccess(
       state,
       action: PayloadAction<{ runId: string; comments: CommentItem[] }>
     ) {
-      if (state.detail && state.detail.run_id === action.payload.runId) {
+      state.updatingComments = false;
+      if (
+        state.detail &&
+        String(state.detail.run_id) === String(action.payload.runId)
+      ) {
         state.detail.comments = action.payload.comments;
       }
-      state.updatingComments = false;
     },
     updateCommentsFailure(state, action: PayloadAction<string>) {
       state.updatingComments = false;
       state.updateCommentsError = action.payload;
     },
 
+    
+
+    // Delete
     deleteResultRequest(state, action: PayloadAction<string | number>) {
       state.deleting = true;
       state.deleteError = null;

@@ -7,6 +7,7 @@ import { MagnifyingGlassIcon, BellIcon } from "@heroicons/react/24/outline";
 import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
 
+
 const ROUTE_TRANSLATION_PATTERNS: { key: string; path: string; end?: boolean }[] =
   [
     { key: "dashboard", path: "/admin", end: true },
@@ -77,6 +78,7 @@ export const Navbar = ({
     (routeKey
       ? t(`navbar:routes.${routeKey}.subtitle`)
       : t("navbar:defaultSubtitle"));
+
 
   const handleLogout = () => dispatch(logoutRequest());
 

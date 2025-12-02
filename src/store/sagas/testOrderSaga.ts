@@ -130,7 +130,7 @@ function* deleteTestOrderSaga(action: PayloadAction<string>) {
   }
 }
 
-export function* testOrderSaga() {
+export function* testOrdersSaga() {
   yield takeEvery("testOrders/getTestOrdersRequest", getTestOrdersSaga);
   yield takeLatest("testOrders/createTestOrderRequest", createTestOrderSaga);
   yield takeLatest("testOrders/updateTestOrderRequest", updateTestOrderSaga);
