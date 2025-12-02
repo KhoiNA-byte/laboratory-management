@@ -7,21 +7,17 @@ const FULL_URL = `${BASE_URL}${INSTRUMENTS_ENDPOINT}`;
 
 class InstrumentService {
   async getInstruments(): Promise<Instrument[]> {
-    console.log('🔄 Fetching instruments from:', FULL_URL);
     
     try {
       const response = await fetch(FULL_URL);
-      console.log('📡 Response status:', response.status);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
       const instruments = await response.json();
-      console.log('✅ Instruments fetched:', instruments);
       return instruments;
     } catch (error) {
-      console.error('❌ Error fetching instruments:', error);
       throw error;
     }
   }
@@ -41,10 +37,8 @@ class InstrumentService {
       }
       
       const newInstrument = await response.json();
-      console.log('✅ Instrument created:', newInstrument);
       return newInstrument;
     } catch (error) {
-      console.error('❌ Error creating instrument:', error);
       throw error;
     }
   }

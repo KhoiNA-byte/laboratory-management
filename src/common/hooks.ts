@@ -6,12 +6,11 @@ import {
     UI_TEXT, 
     INSTRUMENT_STATUS, 
     STATUS_COLORS,
-    // Import action creators từ slice
     fetchInstrumentsRequest,
     addInstrumentRequest, 
     deleteInstrumentRequest,
   } from '../constants/instruments/instruments';
-  import { Instrument } from '../store/types'; // 🔹 THÊM IMPORT NÀY
+  import { Instrument } from '../store/types'; 
 
 
 // Typed hooks
@@ -140,15 +139,15 @@ export const useInstruments = () => {
   
     // Actions - SỬ DỤNG ACTION CREATORS TỪ SLICE
     const fetchInstruments = useCallback(() => {
-      dispatch(fetchInstrumentsRequest()); // ✅ Dùng action creator
+      dispatch(fetchInstrumentsRequest()); 
     }, [dispatch]);
   
     const addInstrument = useCallback((instrumentData: Partial<Instrument>) => {
-      dispatch(addInstrumentRequest(instrumentData)); // ✅ Dùng action creator
+      dispatch(addInstrumentRequest(instrumentData)); 
     }, [dispatch]);
   
     const deleteInstrument = useCallback((instrumentId: string) => {
-      dispatch(deleteInstrumentRequest(instrumentId)); // ✅ Dùng action creator
+      dispatch(deleteInstrumentRequest(instrumentId)); 
     }, [dispatch]);
   
     // Computed values và helper functions giữ nguyên

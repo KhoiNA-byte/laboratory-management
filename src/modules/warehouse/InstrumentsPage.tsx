@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useInstruments } from '../../common/hooks';
 import { StatusCardsGrid } from '../../components/Instruments/statusCard';
-// import { Icon } from '../../components/Instruments/icon'; // 🔹 XÓA DÒNG NÀY
 import InstrumentCard from '../../components/Instruments/InstrumentCard';
 import InstrumentDetailsPopup from './InstrumentDetailPopup';
 import EditInstrumentPopup from './EditInstrumentPage';

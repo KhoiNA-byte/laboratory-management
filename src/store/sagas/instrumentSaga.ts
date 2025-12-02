@@ -22,7 +22,6 @@ function* getInstrumentsSaga() {
   try {
     const instruments: Instrument[] = yield call(instrumentService.getInstruments);
     
-    // ✅ Dùng action creators từ slice thay vì hard code
     yield put(fetchInstrumentsSuccess(instruments));
     
   } catch (error: any) {
