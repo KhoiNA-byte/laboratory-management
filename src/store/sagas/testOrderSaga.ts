@@ -75,7 +75,7 @@ function* deleteTestOrderWithUserSaga(action: PayloadAction<string>) {
   }
 }
 
-export function* testOrderSaga() {
+export function* testOrdersSaga() {
   // Real API sagas
   yield takeLatest(fetchTestOrdersRequest.type, fetchTestOrdersWithUserSaga);
   yield takeLatest(deleteTestOrderRequest.type, deleteTestOrderWithUserSaga);
