@@ -104,7 +104,7 @@ export const {
   addInstrumentRequest,
   addInstrumentSuccess,
   addInstrumentFailure,
-  updateInstrumentRequest,    // 🔹 EXPORT UPDATE ACTIONS
+  updateInstrumentRequest,    
   updateInstrumentSuccess,
   updateInstrumentFailure,
   deleteInstrumentRequest,

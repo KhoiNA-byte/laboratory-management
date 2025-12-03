@@ -86,7 +86,7 @@ export const InstrumentCard: React.FC<InstrumentCardProps> = ({
         </div>
       </div>
 
-      {/* Instrument Details với i18n */}
+      {/* Instrument Details*/}
       <div className="mb-3">
         <div className="flex justify-between items-center py-1">
           <span className="text-gray-500 text-sm">

@@ -2,7 +2,7 @@ import { call, put, takeEvery } from "redux-saga/effects";
 import {
   fetchTestOrdersFailure,
   fetchTestOrdersSuccess,
-} from "../slices/testOrderSlice";
+} from "../slices/testOrderSliceReport";
 import { TestOrder } from "../types";
 import { fetchTestOrdersRequest } from "../slices/testOrderSliceReport";
 
