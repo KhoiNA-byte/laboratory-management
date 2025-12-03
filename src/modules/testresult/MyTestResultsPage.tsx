@@ -31,7 +31,11 @@ const MyTestResultsPage: React.FC = () => {
   const list = useSelector((s: RootState) => s.testResults.list);
   const loading = useSelector((s: RootState) => s.testResults.loadingList);
   const deleting = useSelector((s: RootState) => s.testResults.deleting);
-
+  const authUser = useSelector(
+    (state: RootState) => state.auth?.user ?? state.auth
+  );
+  const isNormalUser =
+    (authUser?.role ?? "").toString().toLowerCase() === "normal_user";
   useEffect(() => {
     dispatch(fetchListRequest());
   }, [dispatch]);
@@ -166,12 +170,16 @@ const MyTestResultsPage: React.FC = () => {
             </div>
 
             <div className="flex justify-end gap-2">
-              <button
-                onClick={handleNew}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center gap-2"
-              >
-                + New Test
-              </button>
+              {!isNormalUser ? (
+                <button
+                  onClick={handleNew}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center gap-2"
+                >
+                  + New Test
+                </button>
+              ) : (
+                <div />
+              )}
             </div>
           </div>
 
@@ -331,13 +339,16 @@ const MyTestResultsPage: React.FC = () => {
                             "View"
                           )}
                         </button>
-
-                        <button
-                          onClick={() => handleDelete(r.runId ?? r.id)}
-                          className="px-3 py-1 border border-red-200 rounded-md text-sm hover:shadow ml-2 text-red-600"
-                        >
-                          {deleting ? "Deleting..." : "Delete"}
-                        </button>
+                        {!isNormalUser ? (
+                          <button
+                            onClick={() => handleDelete(r.runId ?? r.id)}
+                            className="px-3 py-1 border border-red-200 rounded-md text-sm hover:shadow ml-2 text-red-600"
+                          >
+                            {deleting ? "Deleting..." : "Delete"}
+                          </button>
+                        ) : (
+                          <div />
+                        )}
                       </td>
                     </tr>
                   );

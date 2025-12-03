@@ -1,5 +1,5 @@
 // src/store/sagas/testResultsSaga.ts
-import { call, put, takeLatest } from "redux-saga/effects";
+import { call, put, select, takeLatest } from "redux-saga/effects";
 import axios from "axios";
 import {
   fetchListRequest,
@@ -272,9 +272,20 @@ function formatResult(key: string, v: number) {
 /** ------------------ fetchListSaga ------------------ */
 export function* fetchListSaga(): Generator<any, void, any> {
   try {
+    // lấy role và current user id từ redux auth state (best-effort)
+    const auth: any = yield select((state: any) => state.auth);
+    const currentUser = auth?.user ?? auth;
+    const roleRaw: string | undefined = currentUser?.role ?? auth?.role;
+    const role =
+      typeof roleRaw === "string" ? roleRaw.toLowerCase() : undefined;
+    const currentUserId =
+      currentUser?.userId ?? currentUser?.id ?? auth?.userId ?? null;
+
+    // fetch all results (we'll filter by role later)
     const resultsRes = yield call(axios.get, `${API_BASE_URL}/test_results`);
     const results: any[] = resultsRes?.data ?? [];
 
+    // fetch users once (best-effort)
     let users: any[] = [];
     try {
       const usersRes = yield call(axios.get, `${API_BASE_URL}/user`);
@@ -283,13 +294,32 @@ export function* fetchListSaga(): Generator<any, void, any> {
       users = [];
     }
 
+    // fetch orders:
     let orders: any[] = [];
     try {
-      orders = yield call(fetchAllOrdersAsync);
+      if (role === "normal_user" && currentUserId) {
+        // only fetch this user's test_orders (server-side filter if supported)
+        try {
+          const myOrdersRes = yield call(
+            axios.get,
+            `${API_BASE_URL}/test_orders?userId=${encodeURIComponent(
+              String(currentUserId)
+            )}`
+          );
+          orders = myOrdersRes?.data ?? [];
+        } catch {
+          // fallback to full helper if server doesn't support the query param
+          orders = yield call(fetchAllOrdersAsync);
+        }
+      } else {
+        // admin / others - fetch all orders (existing robust helper)
+        orders = yield call(fetchAllOrdersAsync);
+      }
     } catch {
       orders = [];
     }
 
+    // build userMap for name resolution
     const userMap: Record<string, string> = {};
     for (const u of users) {
       const uid = u?.userId ?? u?.id ?? null;
@@ -300,78 +330,95 @@ export function* fetchListSaga(): Generator<any, void, any> {
       if (uid != null) userMap[String(uid)] = name;
     }
 
+    // in-process orders (orders without run_id) - only include for non-normal users.
     const inProcessRows: ListRow[] = [];
-    for (const o of orders || []) {
-      const hasNoRun =
-        o.run_id === undefined ||
-        o.run_id === null ||
-        String(o.run_id).trim() === "";
-      if (!hasNoRun) continue;
-      const dateRaw = o.created_at ?? o.createdAt ?? "";
-      const date = dateRaw ? new Date(dateRaw).toLocaleString() : "";
+    if (role !== "normal_user") {
+      for (const o of orders || []) {
+        const hasNoRun =
+          o.run_id === undefined ||
+          o.run_id === null ||
+          String(o.run_id).trim() === "";
+        if (!hasNoRun) continue;
+        const dateRaw = o.created_at ?? o.createdAt ?? "";
+        const date = dateRaw ? new Date(dateRaw).toLocaleString() : "";
 
-      let patientName =
-        o.patientName ??
-        o.patient_name ??
-        (o.userId ? userMap[String(o.userId)] : undefined) ??
-        "Unknown";
+        let patientName =
+          o.patientName ??
+          o.patient_name ??
+          (o.userId ? userMap[String(o.userId)] : undefined) ??
+          "Unknown";
 
-      if (
-        (patientName === "Unknown" || !patientName) &&
-        (o.userId || o.user_id)
-      ) {
-        try {
-          const nameResolved: string | null = yield call(
-            resolveUserNameAsync,
-            o.userId ?? o.user_id,
-            userMap,
-            users
-          );
-          if (nameResolved) patientName = nameResolved;
-        } catch {}
+        if (
+          (patientName === "Unknown" || !patientName) &&
+          (o.userId || o.user_id)
+        ) {
+          try {
+            const nameResolved: string | null = yield call(
+              resolveUserNameAsync,
+              o.userId ?? o.user_id,
+              userMap,
+              users
+            );
+            if (nameResolved) patientName = nameResolved;
+          } catch {}
+        }
+
+        let tester =
+          (o.userId ? userMap[String(o.userId)] : undefined) ??
+          o.requester ??
+          o.runByUserId ??
+          "Admin";
+
+        if (
+          (tester === "Admin" || !tester) &&
+          (o.runByUserId || o.createdBy || o.created_by)
+        ) {
+          try {
+            const maybe = o.runByUserId ?? o.createdBy ?? o.created_by;
+            const tname: string | null = yield call(
+              resolveUserNameAsync,
+              maybe,
+              userMap,
+              users
+            );
+            if (tname) tester = tname;
+          } catch {}
+        }
+
+        inProcessRows.push({
+          id: String(o.id),
+          patientName,
+          date,
+          tester,
+          status: "In Progress",
+          source: "order",
+          runId: "",
+        });
       }
-
-      let tester =
-        (o.userId ? userMap[String(o.userId)] : undefined) ??
-        o.requester ??
-        o.runByUserId ??
-        "Admin";
-
-      if (
-        (tester === "Admin" || !tester) &&
-        (o.runByUserId || o.createdBy || o.created_by)
-      ) {
-        try {
-          const maybe = o.runByUserId ?? o.createdBy ?? o.created_by;
-          const tname: string | null = yield call(
-            resolveUserNameAsync,
-            maybe,
-            userMap,
-            users
-          );
-          if (tname) tester = tname;
-        } catch {}
-      }
-
-      inProcessRows.push({
-        id: String(o.id),
-        patientName,
-        date,
-        tester,
-        status: "In Progress",
-        source: "order",
-        runId: "",
-      });
     }
 
+    // completed rows from results
     const completedRows: ListRow[] = [];
     const completedResults = (results || []).filter(
       (r) => String(r.status).toLowerCase() === "completed"
     );
+
     for (const r of completedResults) {
+      // find matching order by run_id
       const matchedOrder = (orders || []).find(
         (o) => o.run_id && r.run_id && String(o.run_id) === String(r.run_id)
       );
+
+      // if role is normal_user, only include completed rows that belong to currentUser
+      if (role === "normal_user") {
+        const belongsToUser =
+          String(r.userId ?? r.user_id) === String(currentUserId) ||
+          (matchedOrder &&
+            String(matchedOrder.userId ?? matchedOrder.user_id) ===
+              String(currentUserId));
+        if (!belongsToUser) continue;
+      }
+
       const dateRaw =
         r.performed_at ??
         r.created_at ??
@@ -454,13 +501,22 @@ export function* fetchListSaga(): Generator<any, void, any> {
       });
     }
 
-    const completedIds = new Set(completedRows.map((c) => c.id));
-    const finalRows: ListRow[] = [
-      ...inProcessRows.filter((r) => !completedIds.has(r.id)),
-      ...completedRows,
-    ];
+    // build finalRows according to role:
+    // - normal_user: only completedRows that have runId (so they can view) — we've already filtered by ownership above
+    // build finalRows according to role:
+   let finalRows: ListRow[] = [];
 
-    yield put(fetchListSuccess(finalRows));
+if (role === "normal_user") {
+  finalRows = [...inProcessRows, ...completedRows];
+} else {
+  // for admin / staff: combine but avoid duplicate test order ids
+  const completedIds = new Set(completedRows.map((c) => c.id));
+  finalRows = [...inProcessRows.filter((r) => !completedIds.has(r.id)), ...completedRows];
+}
+
+
+
+yield put(fetchListSuccess(finalRows));
   } catch (err: any) {
     yield put(fetchListFailure(err?.message ?? "Fetch list failed"));
   }

@@ -1,5 +1,13 @@
 {
   "compilerOptions": {
-    "types": ["vite/client", "vitest"]
+    "jsx": "react-jsx", // hoặc "react" nếu dùng phiên bản React cũ hơn
+    "module": "ESNext",
+    "target": "ES6",
+    "lib": ["DOM", "ESNext"],
+    "allowJs": true,
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
   }
 }

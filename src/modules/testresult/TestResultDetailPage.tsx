@@ -1,6 +1,7 @@
-import React, { useEffect, useRef, useState } from "react";
+// src/pages/TestResultDetailPage.tsx
+import React, { useEffect, useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { XMarkIcon, ArrowDownTrayIcon } from "@heroicons/react/24/outline";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 import Comments from "./CommentsPage";
 import HL7Viewer from "./HL7Viewer";
 import { useDispatch, useSelector } from "react-redux";
@@ -9,10 +10,7 @@ import {
   fetchDetailRequest,
   updateCommentsRequest,
 } from "../../store/slices/testResultsSlice";
-import {
-  CommentItem,
-  TestResultDetail,
-} from "../../store/slices/testResultsSlice";
+import { CommentItem } from "../../store/slices/testResultsSlice";
 import { TestParameter } from "../../types/testResult";
 
 export default function TestResultDetailPage(): JSX.Element {
@@ -38,14 +36,18 @@ export default function TestResultDetailPage(): JSX.Element {
     (s: RootState) => s.testResults.loadingDetail
   );
 
+  // new: get auth user
+
   const [rowsState, setRowsState] = useState<any[]>([]);
-  const [isReviewing, setIsReviewing] = useState(false);
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const [isHL7Open, setIsHL7Open] = useState(false);
   const [reviewedBy, setReviewedBy] = useState<string>("AI Auto Review");
-  const [reviewedAt, setReviewedAt] = useState<string | undefined>(undefined);
   const [comments, setComments] = useState<CommentItem[]>([]);
-
+  const authUser = useSelector(
+    (state: RootState) => state.auth?.user ?? state.auth
+  );
+  const isNormalUser =
+    (authUser?.role ?? "").toString().toLowerCase() === "normal_user";
   useEffect(() => {
     if (!orderNumber) {
       navigate(-1);
@@ -61,7 +63,6 @@ export default function TestResultDetailPage(): JSX.Element {
     }
     setRowsState(detail.rows.map((r) => ({ ...r })));
     setReviewedBy(detail.reviewedBy ?? "AI Auto Review");
-    setReviewedAt(detail.reviewedAt);
     setComments(detail.comments ?? []);
   }, [detail]);
 
@@ -106,7 +107,6 @@ export default function TestResultDetailPage(): JSX.Element {
     );
   }
 
-  // build stats
   const total = rowsState.length;
   const normal = rowsState.filter((r) => !r.flag || r.flag === "Normal").length;
   const high = rowsState.filter((r) => r.flag === "High").length;
@@ -114,13 +114,10 @@ export default function TestResultDetailPage(): JSX.Element {
 
   return (
     <div>
-      {/* overlay + popup same structure as your original file */}
       <div
         className="fixed inset-0 bg-black/50 z-40"
         aria-hidden="true"
-        onClick={() => {
-          navigate(-1);
-        }}
+        onClick={() => navigate(-1)}
       />
 
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -258,26 +255,25 @@ export default function TestResultDetailPage(): JSX.Element {
                       Reviewed
                     </h4>
                     <div className="text-sm text-gray-600">By</div>
-                    <div className="mt-3 text-sm font-medium">
-                      {reviewedBy}
-                      
-                    </div>
+                    <div className="mt-3 text-sm font-medium">{reviewedBy}</div>
                   </div>
 
-                  <div className="bg-white rounded-lg shadow-md p-4 border">
-                    <h4 className="text-sm font-semibold text-gray-700 mb-3">
-                      Actions
-                    </h4>
-                    <div className="space-y-3">
-                      <button
-                        type="button"
-                        onClick={() => setIsHL7Open(true)}
-                        className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 border rounded-lg text-sm text-gray-700 hover:shadow"
-                      >
-                        View Raw HL7
-                      </button>
+                  {!isNormalUser && (
+                    <div className="bg-white rounded-lg shadow-md p-4 border">
+                      <h4 className="text-sm font-semibold text-gray-700 mb-3">
+                        Actions
+                      </h4>
+                      <div className="space-y-3">
+                        <button
+                          type="button"
+                          onClick={() => setIsHL7Open(true)}
+                          className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 border rounded-lg text-sm text-gray-700 hover:shadow"
+                        >
+                          View Raw HL7
+                        </button>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -296,37 +292,50 @@ export default function TestResultDetailPage(): JSX.Element {
                 )}
               </div>
               <div className="mt-2">
-                <button
-                  onClick={() => setIsCommentsOpen(true)}
-                  className="text-blue-600 underline"
-                >
-                  More comment
-                </button>
+                {!isNormalUser && (
+                  <button
+                    onClick={() => setIsCommentsOpen(true)}
+                    className="text-blue-600 underline"
+                  >
+                    More comment
+                  </button>
+                )}
               </div>
             </div>
 
             <div className="flex items-center gap-3">
-              <button
-                onClick={() => navigate(-1)}
-                className="px-4 py-2 rounded-lg border text-sm text-gray-700 hover:shadow"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  alert("Review/save (mock)");
-                }}
-                className="px-4 py-2 rounded-lg text-sm bg-blue-600 text-white hover:bg-blue-700"
-              >
-                Review
-              </button>
+              {isNormalUser ? (
+                <button
+                  onClick={() => navigate(-1)}
+                  className="px-4 py-2 rounded-lg border text-sm text-gray-700 hover:shadow"
+                >
+                  Close
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={() => navigate(-1)}
+                    className="px-4 py-2 rounded-lg border text-sm text-gray-700 hover:shadow"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => {
+                      alert("Review/save (mock)");
+                    }}
+                    className="px-4 py-2 rounded-lg text-sm bg-blue-600 text-white hover:bg-blue-700"
+                  >
+                    Review
+                  </button>
+                </>
+              )}
             </div>
           </div>
 
           <button
             onClick={() => navigate(-1)}
             aria-label="Close"
-            className="absolute top-3 right-3 bg-white rounded-full p-1 shadow hover:bg-gray-50"
+            className="absolute top-3 right-3 bg-blue-600 rounded-full p-1 shadow hover:bg-gray-50"
           >
             <XMarkIcon className="h-5 w-5 text-gray-700" />
           </button>
@@ -342,7 +351,8 @@ export default function TestResultDetailPage(): JSX.Element {
         />
       )}
 
-      {isHL7Open && detail?.hl7_raw !== undefined && (
+      {/* only render HL7 viewer for non-normal users */}
+      {!isNormalUser && isHL7Open && detail?.hl7_raw !== undefined && (
         <HL7Viewer
           testOrderId={
             stateData?.testOrderId ?? String(detail.run_id ?? orderNumber)
